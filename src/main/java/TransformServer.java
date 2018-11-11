@@ -1,21 +1,54 @@
+import java.util.ArrayList;
+import java.util.List;
 import org.bytedeco.javacpp.*;
 import static org.bytedeco.javacpp.python.*;
 
 public class TransformServer {
+    private static Pointer program_name;
     public static void main(String[] args) {
-        Pointer program = Py_DecodeLocale(TransformServer.class.getSimpleName(), null);
-        if (program == null) {
-            System.err.println("Fatal error: cannot get class name");
-            System.exit(1);
-        }
-        Py_SetProgramName(program);  /* optional but recommended */
-        Py_Initialize();
-        PyRun_SimpleStringFlags("from time import time,ctime\n"
-                + "print('Today is', ctime(time()))\n", null);
+        init();
+        List<String> code = new ArrayList<String>();
+        code.add("import numpy as np");
+        code.add("x = np.zeros((32, 10))");
+        code.add("y = np.ones((1, 10))");
+        code.add("z = x + y");
+        code.add("print(z.shape)");
+        exec(code);
+        free();
+    }
+
+
+    public static void exec(String code){
+        PyRun_SimpleStringFlags(code, null);
         if (Py_FinalizeEx() < 0) {
-            System.exit(120);
+            throw new RuntimeException("Python execution failed.");
         }
-        PyMem_RawFree(program);
-        System.exit(0);
+    }
+
+    public static void exec(List<String> code){
+        String x = "";
+        for (String line: code){
+            x += line + ";";
+        }
+        exec(x);
+    }
+
+    public static  void exec(String[] code){
+        String x = "";
+        for (String line: code){
+            x += line + ";";
+        }
+        exec(x);
+    }
+
+    public static void init(){
+        program_name = Py_DecodeLocale(TransformServer.class.getSimpleName(), null);
+        Py_SetProgramName(program_name);
+        Py_Initialize();
+    }
+
+    public static void free(){
+        PyMem_RawFree(program_name);
     }
 }
+
