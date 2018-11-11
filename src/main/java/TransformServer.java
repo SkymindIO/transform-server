@@ -20,9 +20,6 @@ public class TransformServer {
 
     public static void exec(String code){
         PyRun_SimpleStringFlags(code, null);
-        if (Py_FinalizeEx() < 0) {
-            throw new RuntimeException("Python execution failed.");
-        }
     }
 
     public static void exec(List<String> code){
@@ -48,6 +45,9 @@ public class TransformServer {
     }
 
     public static void free(){
+        if (Py_FinalizeEx() < 0) {
+            throw new RuntimeException("Python execution failed.");
+        }
         PyMem_RawFree(program_name);
     }
 }
