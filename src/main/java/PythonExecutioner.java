@@ -68,40 +68,39 @@ public class PythonExecutioner {
 
 
 
-    public void exec(String code, PythonInputs pyInputs, PythonOutputs pyOutputs) throws ParseException{
+    private void _exec_inputs(PythonInputs pyInputs){
         Map<String, String> strInputs = pyInputs.getStrInputs();
         Map<String, Integer> intInputs = pyInputs.getIntInputs();
         Map<String, Double> floatInputs = pyInputs.getFloatInputs();
 
         String setcode = "";
-        String[] VarNames = (String[])strInputs.keySet().toArray();
-        for(String varName: VarNames){
+        String[] VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
+        for(Object varName: VarNames){
             String varValue = strInputs.get(varName);
-            setcode += varName + " + " + varValue + ";";
+            setcode += varName + " = \"" + varValue + "\";";
         }
         exec(setcode);
 
         setcode = "";
-        VarNames = (String[])intInputs.keySet().toArray();
+        VarNames = intInputs.keySet().toArray(new String[intInputs.size()]);
         for(String varName: VarNames){
             Integer varValue = intInputs.get(varName);
-            setcode += varName + " + " + varValue.toString() + ";";
+            setcode += varName + " = " + varValue.toString() + ";";
         }
         exec(setcode);
 
         setcode = "";
-        VarNames = (String[])floatInputs.keySet().toArray();
+        VarNames = floatInputs.keySet().toArray(new String[floatInputs.size()]);
         for(String varName: VarNames){
             Double varValue = floatInputs.get(varName);
-            setcode += varName + " + " + varValue.toString() + ";";
+            setcode += varName + " = " + varValue.toString() + ";";
         }
         exec(setcode);
+    }
 
-        exec(code);
-
-
-        String getcode = "import json;json.dump{";
-        VarNames = pyOutputs.getOutputs();
+    private void _exec_outputs(PythonOutputs pyOutputs){
+        String getcode = "import json;json.dump({";
+        String[] VarNames = pyOutputs.getOutputs();
         for (String varName: VarNames){
             getcode += "\"" + varName + "\"" + ":" + varName + ",";
         }
@@ -113,15 +112,46 @@ public class PythonExecutioner {
         String out = read(tempFile);
 
         JSONParser parser = new JSONParser();
-        JSONObject jsObject = (JSONObject) parser.parse(out);
-
-        for (String varName: VarNames){
-            Object varValue = jsObject.get(varName);
-            pyOutputs.setValue(varName, varValue);
+        try{
+            JSONObject jsObject = (JSONObject) parser.parse(out);
+            for (String varName: VarNames){
+                Object varValue = jsObject.get(varName);
+                pyOutputs.setValue(varName, varValue);
+            }
+        }
+        catch (ParseException e){
+            return;
         }
 
 
     }
+    public void exec(String code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+        _exec_inputs(pyInputs);
+        exec(code);
+        _exec_outputs(pyOutputs);
+    }
+
+    public void exec(List<String> code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+        _exec_inputs(pyInputs);
+        String x = "";
+        for (String line: code){
+            x += line + ";";
+        }
+        exec(x);
+        _exec_outputs(pyOutputs);
+    }
+
+
+    public void exec(String[] code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+        _exec_inputs(pyInputs);
+        String x = "";
+        for (String line: code){
+            x += line + ";";
+        }
+        exec(x);
+        _exec_outputs(pyOutputs);
+    }
+
 
     private static String read(String file){
         try {

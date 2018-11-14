@@ -15,7 +15,7 @@ public class PythonOutputs {
     private Map<String, Integer> intOutputs = new HashMap<String, Integer>();
     private Map<String, Double> floatOutputs = new HashMap<String, Double>();
 
-    private Map<String, Type> outputs;
+    private Map<String, Type> outputs = new HashMap<String, Type>();
 
     private Map<Type, Map> maps = new HashMap<Type, Map>();
 
@@ -69,7 +69,8 @@ public class PythonOutputs {
         return outputs.get(name);
     }
 
-    public String[] getOutputs(){
-        return (String[])outputs.keySet().toArray();
+    public String[] getOutputs() {
+        String[] strArr = new String[outputs.size()];
+        return outputs.keySet().toArray(strArr);
     }
 }

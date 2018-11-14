@@ -13,16 +13,26 @@ public class TransformServer{
     public static void main(String[] args){
 
         PythonExecutioner pyExec = new PythonExecutioner();
+        PythonInputs pyInputs = new PythonInputs();
+        PythonOutputs pyOutputs = new PythonOutputs();
+
+        pyInputs.addStr("x", "Hello");
+        pyInputs.addStr("y", "World");
+
         List<String> code = new ArrayList<String>();
-        code.add("import numpy as np");
-        code.add("x = np.zeros((32, 10))");
-        code.add("y = np.ones((1, 10))");
-        code.add("z = x + y");
-        code.add("print(z.shape)");
+        code.add("z = x + ' ' + y");
+
+        pyOutputs.addStr("z");
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        String z = pyOutputs.getStrValue("z");
+
+        System.out.println(z);
+
         pyExec.free();
 
     }
-
 
 }
 
