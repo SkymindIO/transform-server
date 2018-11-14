@@ -10,9 +10,8 @@ import org.bytedeco.javacpp.*;
 import static org.bytedeco.javacpp.python.*;
 
 import org.json.simple.JSONObject;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 
 
@@ -69,7 +68,7 @@ public class PythonExecutioner {
 
 
 
-    public void exec(String code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+    public void exec(String code, PythonInputs pyInputs, PythonOutputs pyOutputs) throws ParseException{
         Map<String, String> strInputs = pyInputs.getStrInputs();
         Map<String, Integer> intInputs = pyInputs.getIntInputs();
         Map<String, Double> floatInputs = pyInputs.getFloatInputs();
@@ -114,7 +113,7 @@ public class PythonExecutioner {
         String out = read(tempFile);
 
         JSONParser parser = new JSONParser();
-        JSObject jsObject = parser.parse(out);
+        JSONObject jsObject = (JSONObject) parser.parse(out);
 
         for (String varName: VarNames){
             Object varValue = jsObject.get(varName);
