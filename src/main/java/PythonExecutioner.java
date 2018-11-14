@@ -111,16 +111,18 @@ public class PythonExecutioner {
 
         String out = read(tempFile);
 
+
         JSONParser parser = new JSONParser();
         try{
             JSONObject jsObject = (JSONObject) parser.parse(out);
             for (String varName: VarNames){
                 Object varValue = jsObject.get(varName);
                 pyOutputs.setValue(varName, varValue);
+
             }
         }
         catch (ParseException e){
-            return;
+            System.out.println(e);
         }
 
 
@@ -153,24 +155,20 @@ public class PythonExecutioner {
     }
 
 
-    private static String read(String file){
-        try {
+    private static String read(String path){
+        try{
+            File file = new File(path);
             FileInputStream fis = new FileInputStream(file);
-            byte[] buffer = new byte[10];
-            StringBuilder sb = new StringBuilder();
-            while (fis.read(buffer) != -1) {
-                sb.append(new String(buffer));
-                buffer = new byte[10];
-            }
+            byte[] data = new byte[(int) file.length()];
+            fis.read(data);
             fis.close();
-
-            String content = sb.toString();
-
-            return content;
+            String str = new String(data, "UTF-8");
+            return str;
         }
         catch (Exception e){
             return "";
         }
+
     }
 
 

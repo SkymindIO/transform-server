@@ -20,6 +20,7 @@ public class PythonOutputs {
     private Map<Type, Map> maps = new HashMap<Type, Map>();
 
 
+
     public PythonOutputs(){
         maps.put(Type.STR, strOutputs);
         maps.put(Type.INT, intOutputs);
@@ -43,8 +44,16 @@ public class PythonOutputs {
     }
 
     public void setValue(String name, Object value){
-        Map map = maps.get(outputs.get(name));
-        map.put(name, value);
+        Type type = outputs.get(name);
+        if (type == Type.INT){
+            intOutputs.put(name, ((Long)value).intValue());
+        }
+        else if (type == Type.FLOAT){
+            floatOutputs.put(name, (Double)value);
+        }
+        else{
+            strOutputs.put(name, (String)value);
+        }
     }
 
     public Object getValue(String name){

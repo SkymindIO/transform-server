@@ -9,8 +9,11 @@ import static org.bytedeco.javacpp.python.*;
 
 
 public class TransformServer{
-    private static Pointer program_name;
     public static void main(String[] args){
+        testStr();
+        testInt();
+    }
+    public static void testStr(){
 
         PythonExecutioner pyExec = new PythonExecutioner();
         PythonInputs pyInputs = new PythonInputs();
@@ -27,6 +30,28 @@ public class TransformServer{
         pyExec.exec(code, pyInputs, pyOutputs);
 
         String z = pyOutputs.getStrValue("z");
+
+        System.out.println(z);
+
+        pyExec.free();
+
+    }
+    public static void testInt(){
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonInputs pyInputs = new PythonInputs();
+        PythonOutputs pyOutputs = new PythonOutputs();
+
+        pyInputs.addInt("x", 10);
+        pyInputs.addInt("y", 20);
+
+        List<String> code = new ArrayList<String>();
+        code.add("z = x + y");
+
+        pyOutputs.addInt("z");
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        int z = pyOutputs.getIntValue("z");
 
         System.out.println(z);
 
