@@ -68,10 +68,13 @@ public class PythonExecutioner {
 
 
 
-    private void _exec_inputs(PythonInputs pyInputs){
-        Map<String, String> strInputs = pyInputs.getStrInputs();
-        Map<String, Integer> intInputs = pyInputs.getIntInputs();
-        Map<String, Double> floatInputs = pyInputs.getFloatInputs();
+    private void _exec_inputs(PythonVariables pyInputs){
+        if (pyInputs == null){
+            return;
+        }
+        Map<String, String> strInputs = pyInputs.getStrVariables();
+        Map<String, Integer> intInputs = pyInputs.getIntVariables();
+        Map<String, Double> floatInputs = pyInputs.getFloatVariables();
 
         String setcode = "";
         String[] VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
@@ -98,9 +101,12 @@ public class PythonExecutioner {
         exec(setcode);
     }
 
-    private void _exec_outputs(PythonOutputs pyOutputs){
+    private void _exec_outputs(PythonVariables pyOutputs){
+        if (pyOutputs == null){
+            return;
+        }
         String getcode = "import json;json.dump({";
-        String[] VarNames = pyOutputs.getOutputs();
+        String[] VarNames = pyOutputs.getVariables();
         for (String varName: VarNames){
             getcode += "\"" + varName + "\"" + ":" + varName + ",";
         }
@@ -127,13 +133,13 @@ public class PythonExecutioner {
 
 
     }
-    public void exec(String code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+    public void exec(String code, PythonVariables pyInputs, PythonVariables pyOutputs){
         _exec_inputs(pyInputs);
         exec(code);
         _exec_outputs(pyOutputs);
     }
 
-    public void exec(List<String> code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+    public void exec(List<String> code, PythonVariables pyInputs, PythonVariables pyOutputs){
         _exec_inputs(pyInputs);
         String x = "";
         for (String line: code){
@@ -144,7 +150,7 @@ public class PythonExecutioner {
     }
 
 
-    public void exec(String[] code, PythonInputs pyInputs, PythonOutputs pyOutputs){
+    public void exec(String[] code, PythonVariables pyInputs, PythonVariables pyOutputs){
         _exec_inputs(pyInputs);
         String x = "";
         for (String line: code){
@@ -152,6 +158,19 @@ public class PythonExecutioner {
         }
         exec(x);
         _exec_outputs(pyOutputs);
+    }
+
+    public PythonVariables exec(PythonTransform transform) throws Exception{
+        if (transform.getInputs() != null){
+            throw new Exception("Required inputs not provided.");
+        }
+        exec(transform.getCode(), null, transform.getOutputs());
+        return transform.getOutputs();
+    }
+
+    public PythonVariables exec(PythonTransform transform, PythonVariables inputs){
+        exec(transform.getCode(), transform.getInputs(), transform.getOutputs());
+        return transform.getOutputs();
     }
 
 
