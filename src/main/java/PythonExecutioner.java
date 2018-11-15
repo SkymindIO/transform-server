@@ -169,7 +169,7 @@ public class PythonExecutioner {
     }
 
     public PythonVariables exec(PythonTransform transform, PythonVariables inputs){
-        exec(transform.getCode(), transform.getInputs(), transform.getOutputs());
+        exec(transform.getCode(), inputs, transform.getOutputs());
         return transform.getOutputs();
     }
 
