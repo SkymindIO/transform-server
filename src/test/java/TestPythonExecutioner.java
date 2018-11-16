@@ -2,6 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -56,6 +58,26 @@ public class TestPythonExecutioner {
         pyExec.free();
 
         assertEquals(30, z);
+
+    }
+    @Test
+    public void testNDArray()throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        pyInputs.addNDArray("x", Nd4j.zeros(2, 3));
+        pyInputs.addNDArray("y", Nd4j.ones(2, 3));
+        pyOutputs.addNDArray("z");
+
+        String code = "z = x + y";
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        INDArray z = pyOutputs.getNDArrayValue("z").getND4JArray();
+
+        assertEquals(6.0, z.sum().getDouble(0));
+        pyExec.free();
 
     }
 }

@@ -17,7 +17,7 @@ import org.json.simple.parser.ParseException;
 
 public class PythonExecutioner {
     private String name;
-    private static String tempFile = "temp.txt";
+    private static String tempFile = "tempfile.txt";
     private Pointer namePtr;
 
     public PythonExecutioner(String name){
@@ -75,6 +75,7 @@ public class PythonExecutioner {
         Map<String, String> strInputs = pyInputs.getStrVariables();
         Map<String, Integer> intInputs = pyInputs.getIntVariables();
         Map<String, Double> floatInputs = pyInputs.getFloatVariables();
+        Map<String, NumpyArray> ndInputs = pyInputs.getNDArrayVariables();
 
         String setcode = "";
         String[] VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
@@ -99,6 +100,29 @@ public class PythonExecutioner {
             setcode += varName + " = " + varValue.toString() + ";";
         }
         exec(setcode);
+
+        if (ndInputs.size()> 0){
+            setcode = "import ctypes; import numpy as np;";
+            VarNames = ndInputs.keySet().toArray(new String[ndInputs.size()]);
+            for(String varName: VarNames){
+                NumpyArray npArr = ndInputs.get(varName);
+                String shapeStr = "(";
+                for (long d: npArr.getShape()){
+                    shapeStr += String.valueOf(d) + ",";
+                }
+                shapeStr += ")";
+                String code;
+                if (npArr.getDType() == NumpyArray.DType.FLOAT32){
+                    code = "np.ctypeslib.as_array(ctypes.cast(" + String.valueOf(npArr.getAddress()) + ", ctypes.POINTER(ctypes.c_float))," + shapeStr + ")";
+                }
+                else{
+                    code = "np.ctypeslib.as_array(ctypes.cast(" + String.valueOf(npArr.getAddress()) + ", ctypes.POINTER(ctypes.c_double))," + shapeStr + ")";
+                }
+                code = varName + "=" + code + ";";
+                setcode += code;
+            }
+            exec(setcode);
+        }
     }
 
     private void _exec_outputs(PythonVariables pyOutputs){
@@ -107,12 +131,24 @@ public class PythonExecutioner {
         }
         String getcode = "import json;json.dump({";
         String[] VarNames = pyOutputs.getVariables();
+        boolean ndarrayHelperAdded = false;
         for (String varName: VarNames){
-            getcode += "\"" + varName + "\"" + ":" + varName + ",";
+            if (pyOutputs.getType(varName) == PythonVariables.Type.NDARRAY){
+                if (! ndarrayHelperAdded){
+                    ndarrayHelperAdded = true;
+                    String helper = "_serialize_ndarray_metadata=lambda x:{\"address\":x.__array_interface__['data'][0]" +
+                            ",\"shape\":x.shape,\"strides\":x.strides,\"dtype\":str(x.dtype)};";
+                    getcode = helper + getcode;
+                }
+                getcode += "\"" + varName + "\"" + ":_serialize_ndarray_metadata(" + varName + "),";
+
+            }
+            else {
+                getcode += "\"" + varName + "\"" + ":" + varName + ",";
+            }
         }
         getcode = getcode.substring(0, getcode.length() - 1);
         getcode += "},open('" + tempFile + "', 'w'));";
-
         exec(getcode);
 
         String out = read(tempFile);
@@ -130,7 +166,6 @@ public class PythonExecutioner {
         catch (ParseException e){
             System.out.println(e);
         }
-
 
     }
     public void exec(String code, PythonVariables pyInputs, PythonVariables pyOutputs){

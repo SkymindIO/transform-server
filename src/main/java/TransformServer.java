@@ -2,10 +2,13 @@ import fi.iki.elonen.NanoHTTPD;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +45,9 @@ public class TransformServer extends NanoHTTPD{
         System.out.println("Server started at " + getListeningPort());
     }
 
-    public static void main(String args[]) throws IOException{
+    public static void main(String args[]) throws Exception{
         TransformServer server = new TransformServer(8000);
+
     }
 
     public Response add(String name, String code, String inputStr, String outputStr){
@@ -169,7 +173,7 @@ public class TransformServer extends NanoHTTPD{
             }
         }
         try{
-            System.out.println("running code...");
+            System.out.println("running python code...");
             PythonVariables outputs = pythonExecutioner.exec(transform, pyInputs);
             if (outputs != null){
                 JSONObject jsonObject = new JSONObject();
