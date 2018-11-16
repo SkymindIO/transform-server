@@ -1,4 +1,5 @@
 import fi.iki.elonen.NanoHTTPD;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -74,6 +75,9 @@ public class TransformServer extends NanoHTTPD{
                     }
                     else if (varType.equals("float")){
                         pyInputs.addFloat(varName);
+                    }
+                    else if (varType.equals("ndarray")){
+                        pyInputs.addNDArray(varName);
                     }
                     else{
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unsupported python type:" + varType);
@@ -164,6 +168,22 @@ public class TransformServer extends NanoHTTPD{
                         else if (varType == PythonVariables.Type.FLOAT){
                             pyInputs.addFloat(varName, (Double)jsonObject.get(varName));
                         }
+                        else if (varType == PythonVariables.Type.NDARRAY){
+                            JSONObject arr = (JSONObject)jsonObject.get(varName);
+                            JSONArray dataArr = (JSONArray)arr.get("data");
+                            JSONArray shapeArr = (JSONArray)arr.get("shape");
+                            float[] data = new float[dataArr.size()];
+                            for (int i=0; i<data.length; i++){
+                                data[i] = (Float)dataArr.get(i);
+                            }
+                            long[] shape = new long[shapeArr.size()];
+                            for(int i=0; i<shape.length; i++){
+                                shape[i] = (Long)shapeArr.get(i);
+                            }
+                            INDArray indarray = Nd4j.create(data, shape);
+
+                            pyInputs.addNDArray(varName, indarray);
+                        }
                     }
                 }
                 catch (ParseException e){
@@ -178,7 +198,12 @@ public class TransformServer extends NanoHTTPD{
             if (outputs != null){
                 JSONObject jsonObject = new JSONObject();
                 for (String varName: outputs.getVariables()){
-                    jsonObject.put(varName, outputs.getValue(varName));
+                    if (outputs.getType(varName) == PythonVariables.Type.NDARRAY){
+                        jsonObject.put(varName, outputs.getNDArrayValue(varName).toJSON());
+                    }
+                    else{
+                        jsonObject.put(varName, outputs.getValue(varName));
+                    }
                 }
                 return newFixedLengthResponse(Response.Status.OK, "text/plain", jsonObject.toJSONString());
             }

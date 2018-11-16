@@ -76,7 +76,7 @@ public class PythonVariables {
         ndVars.put(name, value);
     }
 
-    public void addNDArray(String name, INDArray value)throws Exception{
+    public void addNDArray(String name, INDArray value){
         vars.put(name, Type.NDARRAY);
         ndVars.put(name, new NumpyArray(value));
     }

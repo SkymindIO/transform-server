@@ -132,7 +132,7 @@ public class NumpyArray {
             nd4jArray = Nd4j.create(buff, shape, nd4jStrides, 0);
     }
 
-    public NumpyArray(INDArray nd4jArray)throws Exception{
+    public NumpyArray(INDArray nd4jArray){
         DataBuffer buff = nd4jArray.data();
         address = buff.pointer().address();
         shape = nd4jArray.shape();
@@ -150,7 +150,7 @@ public class NumpyArray {
             dtype = DType.FLOAT64;
         }
         else{
-            throw new Exception("Unsupported context dtype: " + jDtype);
+            //throw new Exception("Unsupported context dtype: " + jDtype);
         }
         this.nd4jArray = nd4jArray;
     }
