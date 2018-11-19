@@ -47,9 +47,12 @@ public class PythonExecutioner {
     }
 
     public static void exec(String code){
+        // print logger
+        String printLogger = "stdout_log=[];i1337_pyprint=print;print=lambda *args,**kwargs:[i1337_pypprint(*args, **kwargs), stdout_log.append(kwargs.get('sep', ' ').join([str(i) for i in args]))];";
+        code = printLogger + code;
+        //code = RestrictedPython.getSafeCode(code);
         PyRun_SimpleStringFlags(code, null);
     }
-
 
     public void exec(List<String> code){
         String x = "";
@@ -138,11 +141,11 @@ public class PythonExecutioner {
             if (pyOutputs.getType(varName) == PythonVariables.Type.NDARRAY){
                 if (! ndarrayHelperAdded){
                     ndarrayHelperAdded = true;
-                    String helper = "_serialize_ndarray_metadata=lambda x:{\"address\":x.__array_interface__['data'][0]" +
+                    String helper = "serialize_ndarray_metadata=lambda x:{\"address\":x.__array_interface__['data'][0]" +
                             ",\"shape\":x.shape,\"strides\":x.strides,\"dtype\":str(x.dtype)};";
                     getcode = helper + getcode;
                 }
-                getcode += "\"" + varName + "\"" + ":_serialize_ndarray_metadata(" + varName + "),";
+                getcode += "\"" + varName + "\"" + ":serialize_ndarray_metadata(" + varName + "),";
 
             }
             else {
