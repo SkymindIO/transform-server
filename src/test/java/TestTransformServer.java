@@ -1,10 +1,14 @@
 import java.io.IOException;
+
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.Test;
 import fi.iki.elonen.NanoHTTPD.Response;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -55,6 +59,30 @@ public class TestTransformServer {
         Response response = server.exec(null, inputs);
         assertEquals(Status.OK, response.getStatus());
         assertEquals(15, ((Long)json(response).get("y")).intValue());
+    }
+
+    @Test
+    public void TestwithNDArrays() throws IOException, ParseException{
+        TransformServer server = new TransformServer(false);
+        String code = "z = x + y * 2.";
+        String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
+        String outputSpec = "{\"z\": \"ndarray\"}";
+        server.add(null, code, inputSpec, outputSpec);
+        String inputs = "{\"x\": {\"data\": [1.0, 2.0, 3.0, 4.0], \"shape\": [2, 2]}, \"y\": {\"data\": [4.0, 3.0, 2.0, 1.0], \"shape\": [2, 2]}}";
+        Response response = server.exec(null, inputs);
+        JSONObject z = (JSONObject) json(response).get("z");
+        JSONArray zData = (JSONArray)z.get("data");
+        JSONArray zShape = (JSONArray)z.get("shape");
+        double[] data = new double[zData.size()];
+        for (int i=0; i<data.length; i++){
+            data[i] = (Double)zData.get(i);
+        }
+        int[] shape = new int[zShape.size()];
+        for(int i=0; i<shape.length; i++){
+            shape[i] = ((Long) zShape.get(i)).intValue();
+        }
+        INDArray arr = Nd4j.create(data, shape);
+        assertEquals(30, (int)arr.sum().getDouble(0));
     }
 }
 
