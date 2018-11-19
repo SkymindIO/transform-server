@@ -19,7 +19,7 @@ public class NumpyArray {
         FLOAT32,
         FLOAT64
     }
-    private static NativeOps nativeOps =NativeOpsHolder.getInstance().getDeviceNativeOps();
+    private static NativeOps nativeOps = NativeOpsHolder.getInstance().getDeviceNativeOps();
     private long address;
     private long[] shape;
     private long[] strides;
@@ -58,17 +58,19 @@ public class NumpyArray {
 
     public JSONObject toJSON(){
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("address", address);
+        JSONArray data = new JSONArray();
+        long size = 1;
+        for (long d: nd4jArray.shape()){
+            size *= d;
+        }
+        for (long i=0; i<size; i++){
+            data.add(nd4jArray.getDouble(i));
+        }
+
         JSONArray shape = new JSONArray();
         for (long d: this.shape){
             shape.add(d);
         }
-        JSONArray strides = new JSONArray();
-        for (long s: this.strides){
-            strides.add(s);
-        }
-        jsonObject.put("shape", shape);
-        jsonObject.put("strides", strides);
         String dtypeStr;
         if (dtype == DType.FLOAT32){
             dtypeStr = "float32";
@@ -76,6 +78,8 @@ public class NumpyArray {
         else{
             dtypeStr = "float64";
         }
+        jsonObject.put("data", data);
+        jsonObject.put("shape", shape);
         jsonObject.put("dtype", dtypeStr);
         return jsonObject;
     }

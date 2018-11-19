@@ -14,6 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bytedeco.javacpp.*;
+import static org.bytedeco.javacpp.python.*;
+
+
 
 public class TransformServer extends NanoHTTPD{
 
@@ -106,6 +110,9 @@ public class TransformServer extends NanoHTTPD{
                     else if (varType.equals("float")){
                         pyOutputs.addFloat(varName);
                     }
+                    else if (varType.equals("ndarray")){
+                        pyOutputs.addNDArray(varName);
+                    }
                     else{
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unsupported python type:" + varType);
                     }
@@ -172,9 +179,9 @@ public class TransformServer extends NanoHTTPD{
                             JSONObject arr = (JSONObject)jsonObject.get(varName);
                             JSONArray dataArr = (JSONArray)arr.get("data");
                             JSONArray shapeArr = (JSONArray)arr.get("shape");
-                            float[] data = new float[dataArr.size()];
+                            double[] data = new double[dataArr.size()];
                             for (int i=0; i<data.length; i++){
-                                data[i] = (Float)dataArr.get(i);
+                                data[i] = (Double)dataArr.get(i);
                             }
                             long[] shape = new long[shapeArr.size()];
                             for(int i=0; i<shape.length; i++){
