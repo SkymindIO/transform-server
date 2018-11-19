@@ -18,8 +18,11 @@ Adds a transform.
 ##### Parameters:
 
 `name`: Name of the transform.
+
 `code`: Python code
+
 `input`: Dictionary mapping from input variable names to types. (Available types are `str`, `int`, `float` and `ndarray`. More types coming soon.)
+
 `output`: Dictionary mapping from output variable names to types.
 
 ##### Example:
@@ -39,6 +42,7 @@ Exceutes a transform
 ##### Parameters:
 
 `name`: Name of the transform to execute.
+
 `input`: Dictionary mapping from input variables names to values.
 
 ##### Example:
