@@ -34,6 +34,26 @@ public class TransformServer extends NanoHTTPD{
             this.start();
         }
     }
+    public static void testNDArray()throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        pyInputs.addNDArray("x", Nd4j.zeros(2, 3));
+        pyInputs.addNDArray("y", Nd4j.ones(2, 3));
+        pyOutputs.addNDArray("z");
+
+        String code = "z = x + y";
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        INDArray z = pyOutputs.getNDArrayValue("z").getND4JArray();
+
+        //assertEquals(6.0, z.sum().getDouble(0));
+        pyExec.free();
+
+    }
+
     public TransformServer(boolean start) throws IOException{
         super(8080);
         if (start){
@@ -51,6 +71,7 @@ public class TransformServer extends NanoHTTPD{
     }
 
     public static void main(String args[]) throws Exception{
+        testNDArray();
         TransformServer server = new TransformServer(8000);
 
     }
