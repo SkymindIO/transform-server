@@ -34,7 +34,7 @@ public class TestTransformServer {
         String code = "print('hello world')";
         server.add(null, code, null, null);
         Response response = server.exec(null, null);
-        assertEquals(Status.OK, response.getStatus());
+        assertEquals(Status.OK, response.getStatus(), convertStreamToString(response.getData()));
     }
 
     @Test

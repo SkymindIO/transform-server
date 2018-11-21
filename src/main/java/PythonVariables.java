@@ -90,6 +90,7 @@ public class PythonVariables {
             floatVars.put(name, (Double)value);
         }
         else if (type == Type.NDARRAY){
+            System.out.println(value);
             ndVars.put(name, new NumpyArray((JSONObject)value));
         }
         else{

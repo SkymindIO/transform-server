@@ -22,7 +22,7 @@ import static org.bytedeco.javacpp.python.*;
 public class TransformServer extends NanoHTTPD{
 
     private Map<String, PythonTransform> transforms = new HashMap<String, PythonTransform>();
-    private PythonExecutioner pythonExecutioner = new PythonExecutioner();
+    private PythonExecutioner pythonExecutioner = new PythonExecutioner("server_executioner");
     private static JSONParser parser = new JSONParser();
     public TransformServer(int port) throws IOException{
         super(port);
@@ -246,7 +246,7 @@ public class TransformServer extends NanoHTTPD{
     }
 
     @Override
-    public Response serve(IHTTPSession session) {
+    public Response serve(IHTTPSession session){
 
         String route = session.getUri();
         System.out.println(route);
