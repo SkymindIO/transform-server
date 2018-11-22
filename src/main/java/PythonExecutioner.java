@@ -60,25 +60,25 @@ public class PythonExecutioner {
         for(Object varName: VarNames){
             String varValue = strInputs.get(varName);
             inputCode += varName + " = \"" + varValue + "\";";
-            //inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += "loc['" + varName + "']=" + varName + ";";
         }
 
         VarNames = intInputs.keySet().toArray(new String[intInputs.size()]);
         for(String varName: VarNames){
             Integer varValue = intInputs.get(varName);
             inputCode += varName + " = " + varValue.toString() + ";";
-            //inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += "loc['" + varName + "']=" + varName + ";";
         }
 
         VarNames = floatInputs.keySet().toArray(new String[floatInputs.size()]);
         for(String varName: VarNames){
             Double varValue = floatInputs.get(varName);
             inputCode += varName + " = " + varValue.toString() + ";";
-            //inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += "loc['" + varName + "']=" + varName + ";";
         }
 
         if (ndInputs.size()> 0){
-            inputCode = "import ctypes; import numpy as np;";
+            inputCode += "import ctypes; import numpy as np;";
             VarNames = ndInputs.keySet().toArray(new String[ndInputs.size()]);
             for(String varName: VarNames){
                 NumpyArray npArr = ndInputs.get(varName);
@@ -96,7 +96,7 @@ public class PythonExecutioner {
                 }
                 code = varName + "=" + code + ";";
                 inputCode += code;
-                //inputCode += "loc['" + varName + "']=" + varName + ";";
+                inputCode += "loc['" + varName + "']=" + varName + ";";
             }
 
         }
