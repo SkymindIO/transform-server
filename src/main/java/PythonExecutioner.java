@@ -47,15 +47,16 @@ public class PythonExecutioner {
 
 
     private String inputCode(PythonVariables pyInputs){
+        String inputCode = "loc={};";
         if (pyInputs == null){
-            return "";
+            return inputCode;
         }
         Map<String, String> strInputs = pyInputs.getStrVariables();
         Map<String, Integer> intInputs = pyInputs.getIntVariables();
         Map<String, Double> floatInputs = pyInputs.getFloatVariables();
         Map<String, NumpyArray> ndInputs = pyInputs.getNDArrayVariables();
 
-        String inputCode = "loc={};";
+
         String[] VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
         for(Object varName: VarNames){
             String varValue = strInputs.get(varName);
