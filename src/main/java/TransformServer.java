@@ -24,9 +24,16 @@ public class TransformServer extends NanoHTTPD{
     private Map<String, PythonTransform> transforms = new HashMap<String, PythonTransform>();
     private PythonExecutioner pythonExecutioner = new PythonExecutioner("server_executioner");
     private static JSONParser parser = new JSONParser();
+
+    public static void main(String args[]) throws Exception{
+        testNDArray();
+        TransformServer server = new TransformServer(8000);
+    }
+
     public TransformServer(int port) throws IOException{
         super(port);
         start();
+
     }
     public TransformServer(int port, boolean start) throws IOException{
         super(port);
@@ -70,11 +77,6 @@ public class TransformServer extends NanoHTTPD{
         System.out.println("Server started at " + getListeningPort());
     }
 
-    public static void main(String args[]) throws Exception{
-        testNDArray();
-        TransformServer server = new TransformServer(8000);
-
-    }
 
     public Response add(String name, String code, String inputStr, String outputStr){
         if (code == null){

@@ -19,6 +19,15 @@ public class PythonExecutioner {
     private String name;
     private static String tempFile = "tempfile.txt";
     private Pointer namePtr;
+    private boolean restricted = true;
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
+    }
+
+    public boolean getRestricted(){
+        return restricted;
+    }
 
     public PythonExecutioner(String name){
         this.name = name;
@@ -81,6 +90,9 @@ public class PythonExecutioner {
         if (ndInputs.size()> 0){
             inputCode += "import ctypes; import numpy as np;";
             VarNames = ndInputs.keySet().toArray(new String[ndInputs.size()]);
+
+            String converter = "__arr_converter = lambda addr, shape, type: np.ctypeslib.as_array(ctypes.cast(addr, ctypes.POINTER(type)), shape);";
+            inputCode += converter;
             for(String varName: VarNames){
                 NumpyArray npArr = ndInputs.get(varName);
                 String shapeStr = "(";
@@ -89,12 +101,15 @@ public class PythonExecutioner {
                 }
                 shapeStr += ")";
                 String code;
+                String ctype;
                 if (npArr.getDType() == NumpyArray.DType.FLOAT32){
-                    code = "np.ctypeslib.as_array(ctypes.cast(" + String.valueOf(npArr.getAddress()) + ", ctypes.POINTER(ctypes.c_float))," + shapeStr + ")";
+
+                    ctype = "ctypes.c_float";
                 }
                 else{
-                    code = "np.ctypeslib.as_array(ctypes.cast(" + String.valueOf(npArr.getAddress()) + ", ctypes.POINTER(ctypes.c_double))," + shapeStr + ")";
+                    ctype = "ctypes.c_double";
                 }
+                code = "__arr_converter(" + String.valueOf(npArr.getAddress()) + "," + shapeStr + "," + ctype + ")";
                 code = varName + "=" + code + ";";
                 inputCode += code;
                 inputCode += "loc['" + varName + "']=" + varName + ";";
@@ -181,7 +196,9 @@ public class PythonExecutioner {
         if (code.charAt(code.length() - 1) != ';'){
             code += ';';
         }
-        code = RestrictedPython.getSafeCode(code);
+        if(restricted){
+            code = RestrictedPython.getSafeCode(code);
+        }
         exec(inputCode + code + outputCode);
         _readOutputs(pyOutputs);
     }
@@ -198,7 +215,9 @@ public class PythonExecutioner {
                 x += line;
             }
         }
-        x = RestrictedPython.getSafeCode(x);
+        if (restricted){
+            x = RestrictedPython.getSafeCode(x);
+        }
         exec(inputCode + x + outputCode);
         _readOutputs(pyOutputs);
     }
@@ -216,7 +235,9 @@ public class PythonExecutioner {
                 x += line;
             }
         }
-        x = RestrictedPython.getSafeCode(x);
+        if (restricted){
+            x = RestrictedPython.getSafeCode(x);
+        }
         exec(inputCode + x + outputCode);
         _readOutputs(pyOutputs);
     }
