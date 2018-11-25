@@ -155,7 +155,7 @@ public class PythonExecutioner {
                 }
             }
         }
-        catch (ParseException e){
+        catch (Exception e){
             System.out.println(e);
         }
     }
@@ -318,7 +318,7 @@ public class PythonExecutioner {
         return ret;
     }
 
-    public NumpyArray evalNDARRAY(String varName){
+    public NumpyArray evalNDARRAY(String varName) throws Exception{
         PyObject xObj = PyDict_GetItemString(globals, varName);
         PyObject arrayInterface = PyObject_GetAttrString(xObj, "__array_interface__");
         PyObject data = PyDict_GetItemString(arrayInterface, "data");
@@ -347,7 +347,22 @@ public class PythonExecutioner {
             Py_DecRef(iObj);
         }       
 
-        NumpyArray ret = new NumpyArray(address, shape, strides);
+        PyObject dtypeObj = PyObject_GetAttrString(xObj, "dtype");
+        PyObject dtypeNameObj = PyObject_GetAttrString(dtypeObj, "name");
+        PyObject bytes = PyUnicode_AsEncodedString(dtypeNameObj, "UTF-8", "strict");
+        BytePointer bp = PyBytes_AsString(bytes);
+        String dtypeName = bp.getString();
+        NumpyArray.DType dtype;
+        if (dtypeName.equals("float64")){
+            dtype = NumpyArray.DType.FLOAT64;
+        }
+        else if (dtypeName.equals("float32")){
+            dtype = NumpyArray.DType.FLOAT32;
+        }
+        else{
+            throw new Exception("Unsupported array type " + dtypeName + ".");
+        }
+        NumpyArray ret = new NumpyArray(address, shape, strides, dtype);
 
         Py_DecRef(arrayInterface);
         Py_DecRef(data);
@@ -356,7 +371,7 @@ public class PythonExecutioner {
         Py_DecRef(shapeObj);
         Py_DecRef(stridesObj);
 
-        System.out.println(ret.getND4JArray().sum().getDouble(0));
+
        return ret;
     }
 

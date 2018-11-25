@@ -32,7 +32,7 @@ public class NumpyArray {
         this.strides = strides;
         setND4JArray();
     }
-    public NumpyArray(long address, long[] shape, long strides[], DType dtype) throws Exception{
+    public NumpyArray(long address, long[] shape, long strides[], DType dtype){
         this.address = address;
         this.shape = shape;
         this.strides = strides;
