@@ -19,7 +19,13 @@ public class PythonExecutioner {
     private String name;
     private static String tempFile = "tempfile.txt";
     private Pointer namePtr;
-    private boolean restricted = true;
+    private boolean restricted = false;
+    private PyObject module;
+    private PyObject globals;
+
+    public PyObject getGlobals(){
+        return globals;
+    }
 
     public void setRestricted(boolean restricted) {
         this.restricted = restricted;
@@ -44,6 +50,8 @@ public class PythonExecutioner {
         namePtr = Py_DecodeLocale(name, null);
         Py_SetProgramName(namePtr);
         Py_Initialize();
+        module = PyImport_AddModule("__main__");
+        globals = PyModule_GetDict(module);
     }
 
     public void free(){
@@ -66,7 +74,10 @@ public class PythonExecutioner {
         Map<String, NumpyArray> ndInputs = pyInputs.getNDArrayVariables();
 
 
-        String[] VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
+        String[] VarNames;
+
+
+        VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
         for(Object varName: VarNames){
             String varValue = strInputs.get(varName);
             inputCode += varName + " = \"" + varValue + "\";";
@@ -128,9 +139,14 @@ public class PythonExecutioner {
         JSONParser parser = new JSONParser();
         try{
             JSONObject jsObject = (JSONObject) parser.parse(out);
-            for (String varName: VarNames){
-                Object varValue = jsObject.get(varName);
-                pyOutputs.setValue(varName, varValue);
+            for (String varName: pyOutputs.getVariables()){
+                if (pyOutputs.getType(varName) == PythonVariables.Type.STR){
+                    pyOutputs.setValue(varName, evalString(varName));
+                }
+                else{
+                    Object varValue = jsObject.get(varName);
+                    pyOutputs.setValue(varName, varValue);
+                }
             }
         }
         catch (ParseException e){
@@ -270,6 +286,16 @@ public class PythonExecutioner {
             return "";
         }
 
+    }
+
+    public String evalString(String varName){
+        PyObject xObj = PyDict_GetItemString(globals, varName);
+        PyObject bytes = PyUnicode_AsEncodedString(xObj, "UTF-8", "strict");
+        BytePointer bp = PyBytes_AsString(bytes);
+        String ret = bp.getString();
+        Py_DecRef(xObj);
+        Py_DecRef(bytes);
+        return ret;
     }
 
 

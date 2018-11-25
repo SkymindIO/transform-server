@@ -9,6 +9,7 @@ public class RestrictedPython {
         safeCode += "byte_code=compile(code, '<inline>', 'exec');";
         safeCode += "exec(byte_code, safe_globals, loc);";
         safeCode += "locals().update(loc);";
+        safeCode += "globals().uppdate(loc)";
         return safeCode;
     }
 
