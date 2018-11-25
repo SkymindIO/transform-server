@@ -140,8 +140,15 @@ public class PythonExecutioner {
         try{
             JSONObject jsObject = (JSONObject) parser.parse(out);
             for (String varName: pyOutputs.getVariables()){
-                if (pyOutputs.getType(varName) == PythonVariables.Type.STR){
+                PythonVariables.Type type = pyOutputs.getType(varName);
+                if (type == PythonVariables.Type.STR){
                     pyOutputs.setValue(varName, evalString(varName));
+                }
+                else if(type == PythonVariables.Type.FLOAT){
+                    pyOutputs.setValue(varName, evalDouble(varName));
+                }
+                else if(type == PythonVariables.Type.INT){
+                    pyOutputs.setValue(varName, evalLong(varName));
                 }
                 else{
                     Object varValue = jsObject.get(varName);
@@ -298,6 +305,19 @@ public class PythonExecutioner {
         return ret;
     }
 
+    public long evalLong(String varName){
+        PyObject xObj = PyDict_GetItemString(globals, varName);
+        long ret = PyLong_AsLongLong(xObj);
+        //Py_DecRef(xObj); // fails with -1073740940, need to investigate
+        return ret;
+    }
+
+    public double evalDouble(String varName){
+        PyObject xObj = PyDict_GetItemString(globals, varName);
+        double ret = PyFloat_AsDouble(xObj);
+        //Py_DecRef(xObj); // fails with -1073740940, need to investigate
+        return ret;
+    }
 
 
 }
