@@ -12,7 +12,7 @@ import static org.bytedeco.javacpp.python.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 
 public class PythonExecutioner {
@@ -142,17 +142,16 @@ public class PythonExecutioner {
             for (String varName: pyOutputs.getVariables()){
                 PythonVariables.Type type = pyOutputs.getType(varName);
                 if (type == PythonVariables.Type.STR){
-                    pyOutputs.setValue(varName, evalString(varName));
+                    pyOutputs.setValue(varName, evalSTRING(varName));
                 }
                 else if(type == PythonVariables.Type.FLOAT){
-                    pyOutputs.setValue(varName, evalDouble(varName));
+                    pyOutputs.setValue(varName, evalFLOAT(varName));
                 }
                 else if(type == PythonVariables.Type.INT){
-                    pyOutputs.setValue(varName, evalLong(varName));
+                    pyOutputs.setValue(varName, evalINTEGER(varName));
                 }
                 else{
-                    Object varValue = jsObject.get(varName);
-                    pyOutputs.setValue(varName, varValue);
+                    pyOutputs.setValue(varName, evalNDARRAY(varName));
                 }
             }
         }
@@ -161,6 +160,8 @@ public class PythonExecutioner {
         }
     }
     private String outputCode(PythonVariables pyOutputs){
+        return "";
+        /*
         if (pyOutputs == null){
             return "";
         }
@@ -186,7 +187,7 @@ public class PythonExecutioner {
         outputCode += "},open('" + tempFile + "', 'w'));";
         return outputCode;
 
-
+    */
     }
 
 
@@ -295,7 +296,7 @@ public class PythonExecutioner {
 
     }
 
-    public String evalString(String varName){
+    public String evalSTRING(String varName){
         PyObject xObj = PyDict_GetItemString(globals, varName);
         PyObject bytes = PyUnicode_AsEncodedString(xObj, "UTF-8", "strict");
         BytePointer bp = PyBytes_AsString(bytes);
@@ -305,19 +306,58 @@ public class PythonExecutioner {
         return ret;
     }
 
-    public long evalLong(String varName){
+    public long evalINTEGER(String varName){
         PyObject xObj = PyDict_GetItemString(globals, varName);
         long ret = PyLong_AsLongLong(xObj);
-        //Py_DecRef(xObj); // fails with -1073740940, need to investigate
         return ret;
     }
 
-    public double evalDouble(String varName){
+    public double evalFLOAT(String varName){
         PyObject xObj = PyDict_GetItemString(globals, varName);
         double ret = PyFloat_AsDouble(xObj);
-        //Py_DecRef(xObj); // fails with -1073740940, need to investigate
         return ret;
     }
 
+    public NumpyArray evalNDARRAY(String varName){
+        PyObject xObj = PyDict_GetItemString(globals, varName);
+        PyObject arrayInterface = PyObject_GetAttrString(xObj, "__array_interface__");
+        PyObject data = PyDict_GetItemString(arrayInterface, "data");
+        PyObject zero = PyLong_FromLong(0);
+        PyObject addressObj = PyObject_GetItem(data, zero);
+        long address = PyLong_AsLongLong(addressObj);
+        PyObject shapeObj = PyObject_GetAttrString(xObj, "shape");
+        int ndim = (int)PyObject_Size(shapeObj);
+        PyObject iObj;
+        long shape[] = new long[ndim];
+        for (int i=0; i<ndim; i++){
+            iObj = PyLong_FromLong(i);
+            PyObject sizeObj = PyObject_GetItem(shapeObj, iObj);
+            long size = PyLong_AsLongLong(sizeObj);
+            shape[i] = size;
+            Py_DecRef(iObj);
+        }
+        
+        PyObject stridesObj = PyObject_GetAttrString(xObj, "strides");
+        long strides[] = new long[ndim];
+        for (int i=0; i<ndim; i++){
+            iObj = PyLong_FromLong(i);
+            PyObject strideObj = PyObject_GetItem(stridesObj, iObj);
+            long stride = PyLong_AsLongLong(strideObj);
+            strides[i] = stride;
+            Py_DecRef(iObj);
+        }       
+
+        NumpyArray ret = new NumpyArray(address, shape, strides);
+
+        Py_DecRef(arrayInterface);
+        Py_DecRef(data);
+        Py_DecRef(zero);
+        Py_DecRef(addressObj);
+        Py_DecRef(shapeObj);
+        Py_DecRef(stridesObj);
+
+        System.out.println(ret.getND4JArray().sum().getDouble(0));
+       return ret;
+    }
 
 }

@@ -90,8 +90,15 @@ public class PythonVariables {
             floatVars.put(name, (Double)value);
         }
         else if (type == Type.NDARRAY){
-            System.out.println(value);
-            ndVars.put(name, new NumpyArray((JSONObject)value));
+            if (value instanceof  NumpyArray){
+                ndVars.put(name, (NumpyArray)value);
+            }
+            else if (value instanceof  INDArray){
+                ndVars.put(name, (NumpyArray)value);
+            }
+            else{
+                ndVars.put(name, new NumpyArray((JSONObject)value));
+            }
         }
         else{
             strVars.put(name, (String)value);
