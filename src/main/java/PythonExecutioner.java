@@ -1,23 +1,14 @@
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.bytedeco.javacpp.*;
 import static org.bytedeco.javacpp.python.*;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.nd4j.linalg.api.ndarray.INDArray;
-
 
 public class PythonExecutioner {
     private String name;
-    private static String tempFile = "tempfile.txt";
     private Pointer namePtr;
     private boolean restricted = false;
     private PyObject module;
@@ -134,11 +125,7 @@ public class PythonExecutioner {
         if (pyOutputs == null){
             return;
         }
-        String out = read(tempFile);
-        String[] VarNames = pyOutputs.getVariables();
-        JSONParser parser = new JSONParser();
         try{
-            JSONObject jsObject = (JSONObject) parser.parse(out);
             for (String varName: pyOutputs.getVariables()){
                 PythonVariables.Type type = pyOutputs.getType(varName);
                 if (type == PythonVariables.Type.STR){
