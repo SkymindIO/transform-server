@@ -6,6 +6,7 @@ import java.util.Map;
 import org.bytedeco.javacpp.*;
 import static org.bytedeco.javacpp.python.*;
 
+import org.nd4j.linalg.api.buffer.DataType;
 
 public class PythonExecutioner {
     private String name;
@@ -54,7 +55,7 @@ public class PythonExecutioner {
 
 
 
-    private String inputCode(PythonVariables pyInputs){
+    private String inputCode(PythonVariables pyInputs)throws Exception{
         String inputCode = "loc={};";
         if (pyInputs == null){
             return inputCode;
@@ -104,13 +105,23 @@ public class PythonExecutioner {
                 shapeStr += ")";
                 String code;
                 String ctype;
-                if (npArr.getDType() == NumpyArray.DType.FLOAT32){
+                if (npArr.getDType() == DataType.FLOAT){
 
                     ctype = "ctypes.c_float";
                 }
-                else{
+                else if (npArr.getDType() == DataType.DOUBLE){
                     ctype = "ctypes.c_double";
                 }
+                else if (npArr.getDType() == DataType.INT){
+                    ctype = "ctypes.c_int";
+                }
+                else if (npArr.getDType() == DataType.LONG){
+                    ctype = "ctypes.c_long";
+                }
+                else{
+                    throw new Exception("Unsupported data type: " + npArr.getDType().toString() + ".");
+                }
+
                 code = "__arr_converter(" + String.valueOf(npArr.getAddress()) + "," + shapeStr + "," + ctype + ")";
                 code = varName + "=" + code + ";";
                 inputCode += code;
@@ -201,7 +212,7 @@ public class PythonExecutioner {
         exec(x);
     }
 
-    public void exec(String code, PythonVariables pyInputs, PythonVariables pyOutputs){
+    public void exec(String code, PythonVariables pyInputs, PythonVariables pyOutputs) throws Exception{
         String inputCode = inputCode(pyInputs);
         String outputCode = outputCode(pyOutputs);
         if (code.charAt(code.length() - 1) != ';'){
@@ -214,9 +225,8 @@ public class PythonExecutioner {
         _readOutputs(pyOutputs);
     }
 
-    public void exec(List<String> code, PythonVariables pyInputs, PythonVariables pyOutputs){
+    public void exec(List<String> code, PythonVariables pyInputs, PythonVariables pyOutputs)throws Exception{
         String inputCode = inputCode(pyInputs);
-        String outputCode = outputCode(pyOutputs);
         String x = "";
         for (String line: code){
             if(line.charAt(line.length() - 1) != ';'){
@@ -229,12 +239,12 @@ public class PythonExecutioner {
         if (restricted){
             x = RestrictedPython.getSafeCode(x);
         }
-        exec(inputCode + x + outputCode);
+        exec(inputCode + x);
         _readOutputs(pyOutputs);
     }
 
 
-    public void exec(String[] code, PythonVariables pyInputs, PythonVariables pyOutputs){
+    public void exec(String[] code, PythonVariables pyInputs, PythonVariables pyOutputs)throws Exception{
         String inputCode = inputCode(pyInputs);
         String outputCode = outputCode(pyOutputs);
         String x = "";
@@ -261,7 +271,7 @@ public class PythonExecutioner {
         return transform.getOutputs();
     }
 
-    public PythonVariables exec(PythonTransform transform, PythonVariables inputs){
+    public PythonVariables exec(PythonTransform transform, PythonVariables inputs)throws Exception{
         exec(transform.getCode(), inputs, transform.getOutputs());
         return transform.getOutputs();
     }
@@ -339,16 +349,23 @@ public class PythonExecutioner {
         PyObject bytes = PyUnicode_AsEncodedString(dtypeNameObj, "UTF-8", "strict");
         BytePointer bp = PyBytes_AsString(bytes);
         String dtypeName = bp.getString();
-        NumpyArray.DType dtype;
+        DataType dtype;
         if (dtypeName.equals("float64")){
-            dtype = NumpyArray.DType.FLOAT64;
+            dtype = DataType.DOUBLE;
         }
         else if (dtypeName.equals("float32")){
-            dtype = NumpyArray.DType.FLOAT32;
+            dtype = DataType.FLOAT;
+        }
+        else if (dtypeName.equals("int32")){
+            dtype = DataType.INT;
+        }
+        else if (dtypeName.equals("int64")){
+            dtype = DataType.LONG;
         }
         else{
             throw new Exception("Unsupported array type " + dtypeName + ".");
         }
+
         NumpyArray ret = new NumpyArray(address, shape, strides, dtype);
 
         Py_DecRef(arrayInterface);

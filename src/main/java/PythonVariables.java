@@ -81,7 +81,7 @@ public class PythonVariables {
         ndVars.put(name, new NumpyArray(value));
     }
 
-    public void setValue(String name, Object value){
+    public void setValue(String name, Object value) throws Exception{
         Type type = vars.get(name);
         if (type == Type.INT){
             intVars.put(name, ((Long)value).intValue());

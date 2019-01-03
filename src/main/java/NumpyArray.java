@@ -11,20 +11,19 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.nativeblas.NativeOps;
 import org.nd4j.nativeblas.NativeOpsHolder;
+import org.nd4j.linalg.api.buffer.DataType;
+
 
 import java.util.ArrayList;
 
 
 public class NumpyArray {
-    enum DType{
-        FLOAT32,
-        FLOAT64
-    }
+
     private static NativeOps nativeOps = NativeOpsHolder.getInstance().getDeviceNativeOps();
     private long address;
     private long[] shape;
     private long[] strides;
-    private DType dtype = DType.FLOAT32;
+    private DataType dtype = DataType.FLOAT;
     private INDArray nd4jArray;
 
     public NumpyArray(long address, long[] shape, long strides[]){
@@ -33,7 +32,7 @@ public class NumpyArray {
         this.strides = strides;
         setND4JArray();
     }
-    public NumpyArray(long address, long[] shape, long strides[], DType dtype){
+    public NumpyArray(long address, long[] shape, long strides[], DataType dtype){
         this.address = address;
         this.shape = shape;
         this.strides = strides;
@@ -53,7 +52,7 @@ public class NumpyArray {
         return strides;
     }
 
-    public DType getDType() {
+    public DataType getDType() {
         return dtype;
     }
 
@@ -72,13 +71,7 @@ public class NumpyArray {
         for (long d: this.shape){
             shape.add(d);
         }
-        String dtypeStr;
-        if (dtype == DType.FLOAT32){
-            dtypeStr = "float32";
-        }
-        else{
-            dtypeStr = "float64";
-        }
+        String dtypeStr = dtype.toString();
         jsonObject.put("data", data);
         jsonObject.put("shape", shape);
         jsonObject.put("dtype", dtypeStr);
@@ -86,7 +79,7 @@ public class NumpyArray {
     }
 
 
-    public NumpyArray(JSONObject json){
+    public NumpyArray(JSONObject json) throws Exception{
         address = (Long)json.get("address");
         JSONArray shapeJson = (JSONArray)json.get("shape");
         shape = new long[shapeJson.size()];
@@ -98,13 +91,22 @@ public class NumpyArray {
         for (int i=0; i<strides.length; i++){
             strides[i] = (Long)stridesJson.get(i);
         }
-        String dtpeStr = (String)json.get("dtype");
-        if (dtpeStr != null){
-            if (dtpeStr.equals("float32")){
-                dtype = DType.FLOAT32;
+        String dtypeStr = (String)json.get("dtype");
+        if (dtypeStr != null){
+            if (dtypeStr.equals("FLOAT")){
+                dtype = DataType.FLOAT;
+            }
+            else if (dtypeStr.equals("DOUBLE")){
+                dtype = DataType.DOUBLE;
+            }
+            else if (dtypeStr.equals("INT")){
+                dtype = DataType.INT;
+            }
+            else if (dtypeStr.equals("LONG")){
+                dtype = DataType.LONG;
             }
             else{
-                dtype = DType.FLOAT64;
+                throw new Exception("Unsupported type: " + dtypeStr);
             }
         }
         setND4JArray();
@@ -115,26 +117,21 @@ public class NumpyArray {
     }
 
     private void setND4JArray(){
-            long size = 1;
-            for(long d: shape){
-                size *= d;
-            }
-            Pointer ptr = nativeOps.pointerForAddress(address);
-            DataBuffer buff;
-            if (dtype == DType.FLOAT32) {
-                FloatPointer floatPtr = new FloatPointer(ptr);
-                buff = Nd4j.createBuffer(floatPtr, size);
-            }
-            else{
-                DoublePointer doublePtr = new DoublePointer(ptr);
-                buff = Nd4j.createBuffer(doublePtr, size);
-            }
-            int elemSize = buff.getElementSize();
-            long[] nd4jStrides = new long[strides.length];
-            for (int i=0; i<strides.length; i++){
-                nd4jStrides[i] = strides[i] / elemSize;
-            }
-            nd4jArray = Nd4j.create(buff, shape, nd4jStrides, 0);
+        long size = 1;
+        for(long d: shape){
+            size *= d;
+        }
+        Pointer ptr = nativeOps.pointerForAddress(address);
+        ptr = ptr.limit(size);
+        ptr = ptr.capacity(size);
+        DataBuffer buff = Nd4j.createBuffer(ptr, size, dtype);
+        int elemSize = buff.getElementSize();
+        long[] nd4jStrides = new long[strides.length];
+        for (int i=0; i<strides.length; i++){
+            nd4jStrides[i] = strides[i] / elemSize;
+        }
+        this.nd4jArray = Nd4j.create(buff, shape, nd4jStrides, 0, 'c', dtype);
+
     }
 
     public NumpyArray(INDArray nd4jArray){
@@ -147,16 +144,7 @@ public class NumpyArray {
         for(int i=0; i<strides.length; i++){
             strides[i] = nd4jStrides[i] * elemSize;
         }
-        String jDtype = DataTypeUtil.getDTypeForName(DataTypeUtil.getDtypeFromContext());
-        if (jDtype.equals("float")){
-            dtype = DType.FLOAT32;
-        }
-        else if (jDtype.equals("double")){
-            dtype = DType.FLOAT64;
-        }
-        else{
-            //throw new Exception("Unsupported context dtype: " + jDtype);
-        }
+        dtype = nd4jArray.dataType();
         this.nd4jArray = nd4jArray;
     }
 

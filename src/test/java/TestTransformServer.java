@@ -22,7 +22,7 @@ public class TestTransformServer {
         java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
-    private static JSONObject json(Response response) throws IOException, ParseException{
+    private static JSONObject json(Response response) throws ParseException{
         String str = convertStreamToString(response.getData());
         JSONObject jsonObject = (JSONObject)parser.parse(str);
         return jsonObject;

@@ -25,9 +25,8 @@ public class TransformServer extends NanoHTTPD{
     private PythonExecutioner pythonExecutioner = new PythonExecutioner("server_executioner");
     private static JSONParser parser = new JSONParser();
 
-    public static void main(String args[]) throws Exception{
-        testNDArray();
-        TransformServer server = new TransformServer(8000);
+    public static void main(String args[]){
+
     }
 
     public TransformServer(int port) throws IOException{
