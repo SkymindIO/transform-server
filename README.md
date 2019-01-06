@@ -80,7 +80,7 @@ Response:
 "z": {
       "data": [5.0, 5.0, 5.0, 5.0],
       "shape": [2, 2],
-      "dtype": "float32"
+      "dtype": "FLOAT"
     }
 }
 
