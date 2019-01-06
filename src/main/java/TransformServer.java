@@ -1,18 +1,17 @@
 import fi.iki.elonen.NanoHTTPD;
+import org.apache.commons.lang3.ArrayUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.bytedeco.javacpp.*;
 import static org.bytedeco.javacpp.python.*;
@@ -201,17 +200,48 @@ public class TransformServer extends NanoHTTPD{
                             JSONObject arr = (JSONObject)jsonObject.get(varName);
                             JSONArray dataArr = (JSONArray)arr.get("data");
                             JSONArray shapeArr = (JSONArray)arr.get("shape");
-                            double[] data = new double[dataArr.size()];
-                            for (int i=0; i<data.length; i++){
-                                data[i] = (Double)dataArr.get(i);
-                            }
                             long[] shape = new long[shapeArr.size()];
                             for(int i=0; i<shape.length; i++){
                                 shape[i] = (Long)shapeArr.get(i);
                             }
-                            INDArray indarray = Nd4j.create(data, shape);
+                            String dtype = (String)arr.get("dtype");
+                            dtype = dtype.toLowerCase();
+                            if (dtype.equals("float32") || dtype.equals("float")){
+                                float[] data = new float[dataArr.size()];
+                                for(int i=0; i<data.length; i++){
+                                    data[i] = ((Double)dataArr.get(i)).floatValue();
+                                }
 
-                            pyInputs.addNDArray(varName, indarray);
+                                INDArray indArray = Nd4j.create(data, shape);
+                                pyInputs.addNDArray(varName, indArray);
+                            }
+                            else if (dtype.equals("float64") || dtype.equals("double")){
+                                double[] data = new double[dataArr.size()];
+                                for (int i=0; i<data.length; i++){
+                                    data[i] = (Double)dataArr.get(i);
+                                }
+
+                                INDArray indArray = Nd4j.create(data, shape);
+                                pyInputs.addNDArray(varName, indArray);
+                            }
+                            else if (dtype.equals("int32") || dtype.equals("int")){
+                                int[] data = new int[dataArr.size()];
+                                for (int i=0; i<data.length; i++){
+                                    data[i] = ((Long)dataArr.get(i)).intValue();
+                                }
+
+                                INDArray indArray = Nd4j.create(data, shape, DataType.INT);
+                                pyInputs.addNDArray(varName, indArray);
+                            }
+                            else if (dtype.equals("int64") || dtype.equals("long")){
+                                long[] data = new long[dataArr.size()];
+                                for (int i=0; i<data.length; i++){
+                                    data[i] = ((Long)dataArr.get(i));
+                                }
+
+                                INDArray indArray = Nd4j.create(data, shape, DataType.LONG);
+                                pyInputs.addNDArray(varName, indArray);
+                            }
                         }
                     }
                 }

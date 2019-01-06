@@ -97,6 +97,7 @@ public class PythonExecutioner {
             String converter = "__arr_converter = lambda addr, shape, type: np.ctypeslib.as_array(ctypes.cast(addr, ctypes.POINTER(type)), shape);";
             inputCode += converter;
             for(String varName: VarNames){
+                System.out.println(varName);
                 NumpyArray npArr = ndInputs.get(varName);
                 String shapeStr = "(";
                 for (long d: npArr.getShape()){
@@ -367,7 +368,6 @@ public class PythonExecutioner {
         }
 
         NumpyArray ret = new NumpyArray(address, shape, strides, dtype);
-
         Py_DecRef(arrayInterface);
         Py_DecRef(data);
         Py_DecRef(zero);
