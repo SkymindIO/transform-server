@@ -106,6 +106,7 @@ public class TransformServer extends NanoHTTPD{
                     }
                     else if (varType.equals("list")){
                         pyInputs.addList(varName);
+
                     }
                     else{
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unsupported python type:" + varType);
@@ -137,6 +138,9 @@ public class TransformServer extends NanoHTTPD{
                     else if (varType.equals("ndarray")){
                         pyOutputs.addNDArray(varName);
                     }
+                    else if (varType.equals("list")){
+                        pyOutputs.addList(varName);
+                    }
                     else{
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unsupported python type:" + varType);
                     }
@@ -166,7 +170,6 @@ public class TransformServer extends NanoHTTPD{
     }
 
     public Response exec(@Nullable String name, @Nullable String inputStr){
-
         if (name == null){
             if (transforms.size() == 0){
                 return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "No transforms added.");
@@ -283,6 +286,14 @@ public class TransformServer extends NanoHTTPD{
                 for (String varName: outputs.getVariables()){
                     if (outputs.getType(varName) == PythonVariables.Type.NDARRAY){
                         jsonObject.put(varName, outputs.getNDArrayValue(varName).toJSON());
+                    }
+                    else if (outputs.getType(varName) == PythonVariables.Type.LIST){
+                        JSONArray arr = new JSONArray();
+                        Object objArr[] = outputs.getListValue(varName);
+                        for (Object obj: objArr){
+                            arr.add(obj);
+                        }
+                        jsonObject.put(varName, arr);
                     }
                     else{
                         jsonObject.put(varName, outputs.getValue(varName));

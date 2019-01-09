@@ -31,7 +31,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestSimpleExec() throws IOException{
+    public void testSimpleExec() throws IOException{
         TransformServer server = new TransformServer(false);
         String code = "print('hello world')";
         server.add(null, code, null, null);
@@ -40,7 +40,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public  void TestExecWithInputs() throws IOException{
+    public  void testExecWithInputs() throws IOException{
         TransformServer server = new TransformServer(false);
         String code = "print(x + y)";
         String inputSpec = "{\"x\": \"int\", \"y\": \"int\"}";
@@ -51,7 +51,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestWithInputsAndOutputs() throws IOException, ParseException{
+    public void testExecWithInputsAndOutputs() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "y = x + 10";
         String inputSpec = "{\"x\": \"int\"}";
@@ -64,7 +64,24 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestwithNDArrays() throws IOException, ParseException{
+    public void TestList() throws Exception{
+        TransformServer server = new TransformServer(false);
+        String inputSpec = "{\"x\": \"list\"}";
+        String outputSpec = "{\"y\": \"list\"}";
+        String code = "x.append(5); y=x";
+        String inputs = "{\"x\": [1, 2, 3, 4]}";
+        server.add(null, code, inputSpec, outputSpec);
+        Response response = server.exec(null, inputs);
+        assertEquals(Status.OK, response.getStatus());
+        Object output[] = ((JSONArray)(json(response).get("y"))).toArray();
+        assertEquals(5L, output.length);
+        for (int i=0; i < 5; i++){
+            assertEquals(i +1, ((Long)output[i]).intValue());
+        }
+    }
+
+    @Test
+    public void testNDArrays() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -88,7 +105,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestFloat() throws IOException, ParseException{
+    public void testFloat() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -114,7 +131,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestDouble() throws IOException, ParseException{
+    public void testDouble() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -140,7 +157,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestShort() throws IOException, ParseException{
+    public void testShort() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -166,7 +183,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestInt() throws IOException, ParseException{
+    public void testInt() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -193,7 +210,7 @@ public class TestTransformServer {
 
 
     @Test
-    public void TestLong() throws IOException, ParseException{
+    public void testLong() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
