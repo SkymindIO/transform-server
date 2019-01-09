@@ -1,8 +1,11 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
 
+import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
 import org.bytedeco.javacpp.*;
 import static org.bytedeco.javacpp.python.*;
 
@@ -14,6 +17,7 @@ public class PythonExecutioner {
     private boolean restricted = false;
     private PyObject module;
     private PyObject globals;
+    private JSONParser parser = new JSONParser();
 
     public PyObject getGlobals(){
         return globals;
@@ -54,6 +58,27 @@ public class PythonExecutioner {
     }
 
 
+    private String jArrayToPyString(Object[] array){
+        String str = "[";
+        for (int i=0; i < array.length; i++){
+            Object obj = array[i];
+            if (obj instanceof Object[]){
+                str += jArrayToPyString((Object[])obj);
+            }
+            else if (obj instanceof String){
+                str += "\"" + obj + "\"";
+            }
+            else{
+                str += obj.toString().replace("\"", "\\\"");
+            }
+            if (i < array.length - 1){
+                str += ",";
+            }
+
+        }
+        str += "]";
+        return str;
+    }
 
     private String inputCode(PythonVariables pyInputs)throws Exception{
         String inputCode = "loc={};";
@@ -64,6 +89,7 @@ public class PythonExecutioner {
         Map<String, Integer> intInputs = pyInputs.getIntVariables();
         Map<String, Double> floatInputs = pyInputs.getFloatVariables();
         Map<String, NumpyArray> ndInputs = pyInputs.getNDArrayVariables();
+        Map<String, Object[]> listInputs = pyInputs.getListVariables();
 
 
         String[] VarNames;
@@ -90,6 +116,13 @@ public class PythonExecutioner {
             inputCode += "loc['" + varName + "']=" + varName + ";";
         }
 
+        VarNames = listInputs.keySet().toArray(new String[listInputs.size()]);
+        for (String varName: VarNames){
+            Object[] varValue = listInputs.get(varName);
+            String listStr = jArrayToPyString(varValue);
+            inputCode += varName + " = " + listStr + ";";
+            inputCode += "loc['" + varName + "']=" + varName + ";";
+        }
         if (ndInputs.size()> 0){
             inputCode += "import ctypes; import numpy as np;";
             VarNames = ndInputs.keySet().toArray(new String[ndInputs.size()]);
@@ -151,13 +184,17 @@ public class PythonExecutioner {
                 else if(type == PythonVariables.Type.INT){
                     pyOutputs.setValue(varName, evalINTEGER(varName));
                 }
+                else if (type == PythonVariables.Type.LIST){
+                    Object varVal[] = evalLIST(varName);
+                    pyOutputs.setValue(varName, varVal);
+                }
                 else{
                     pyOutputs.setValue(varName, evalNDARRAY(varName));
                 }
             }
         }
         catch (Exception e){
-
+            System.out.println(e.toString());
         }
     }
     private String outputCode(PythonVariables pyOutputs){
@@ -316,6 +353,18 @@ public class PythonExecutioner {
         PyObject xObj = PyDict_GetItemString(globals, varName);
         double ret = PyFloat_AsDouble(xObj);
         return ret;
+    }
+
+    public Object[] evalLIST(String varName) throws Exception{
+        PyObject xObj = PyDict_GetItemString(globals, varName);
+        PyObject strObj = PyObject_Str(xObj);
+        PyObject bytes = PyUnicode_AsEncodedString(strObj, "UTF-8", "strict");
+        BytePointer bp = PyBytes_AsString(bytes);
+        String listStr = bp.getString();
+        Py_DecRef(xObj);
+        Py_DecRef(bytes);
+        JSONArray jsonArray = (JSONArray)parser.parse(listStr.replace("\'", "\""));
+        return jsonArray.toArray();
     }
 
     public NumpyArray evalNDARRAY(String varName) throws Exception{

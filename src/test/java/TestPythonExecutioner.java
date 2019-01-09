@@ -64,6 +64,39 @@ public class TestPythonExecutioner {
     }
 
     @Test
+    public void testList() throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        Object[] x = new Object[]{1L, 2L, 3L, "a", "b", "c"};
+        Object[] y = new Object[]{4L, 5L, 6L, "d", "e", "f"};
+
+        pyInputs.addList("x", x);
+        pyInputs.addList("y", y);
+
+        String code = "z = x + y";
+
+        pyOutputs.addList("z");
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        Object[] z = pyOutputs.getListValue("z");
+
+        pyExec.free();
+
+        assertEquals(z.length, x.length + y.length);
+
+        for (int i=0; i < x.length; i++){
+            assertEquals(x[i], z[i]);
+        }
+        for (int i=0; i<y.length; i++){
+            assertEquals(y[i], z[x.length + i]);
+        }
+
+    }
+
+    @Test
     public void testNDArrayFloat()throws Exception{
         PythonExecutioner pyExec = new PythonExecutioner();
         PythonVariables pyInputs = new PythonVariables();

@@ -1,34 +1,45 @@
 import org.json.simple.JSONObject;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PythonVariables {
 
     enum Type{
+        BOOL,
         STR,
         INT,
         FLOAT,
-        NDARRAY
+        NDARRAY,
+        LIST
 
     }
 
     private Map<String, String> strVars = new HashMap<String, String>();
     private Map<String, Integer> intVars = new HashMap<String, Integer>();
     private Map<String, Double> floatVars = new HashMap<String, Double>();
+    private Map<String, Boolean> boolVars = new HashMap<String, Boolean>();
     private Map<String, NumpyArray> ndVars = new HashMap<String, NumpyArray>();
+    private Map<String, Object[]> listVars = new HashMap<String, Object[]>();
+
     private Map<String, Type> vars = new HashMap<String, Type>();
 
     private Map<Type, Map> maps = new HashMap<Type, Map>();
 
 
     public PythonVariables(){
+        maps.put(Type.BOOL, boolVars);
         maps.put(Type.STR, strVars);
         maps.put(Type.INT, intVars);
         maps.put(Type.FLOAT, floatVars);
         maps.put(Type.NDARRAY, ndVars);
+        maps.put(Type.LIST, listVars);
+
+    }
+
+    public void addBool(String name){
+        vars.put(name, Type.BOOL);
+        boolVars.put(name, null);
     }
 
     public void addStr(String name){
@@ -49,6 +60,16 @@ public class PythonVariables {
     public void addNDArray(String name){
         vars.put(name, Type.NDARRAY);
         ndVars.put(name, null);
+    }
+
+    public void addList(String name){
+        vars.put(name, Type.LIST);
+        listVars.put(name, null);
+    }
+
+    public void addBool(String name, boolean value){
+        vars.put(name, Type.BOOL);
+        boolVars.put(name, value);
     }
 
     public void addStr(String name, String value){
@@ -81,6 +102,11 @@ public class PythonVariables {
         ndVars.put(name, new NumpyArray(value));
     }
 
+    public void addList(String name, Object[] value){
+        vars.put(name, Type.LIST);
+        listVars.put(name, value);
+    }
+
     public void setValue(String name, Object value) throws Exception{
         Type type = vars.get(name);
         if (type == Type.INT){
@@ -99,6 +125,9 @@ public class PythonVariables {
             else{
                 ndVars.put(name, new NumpyArray((JSONObject)value));
             }
+        }
+        else if (type == Type.LIST){
+            listVars.put(name, (Object[]) value);
         }
         else{
             strVars.put(name, (String)value);
@@ -127,6 +156,10 @@ public class PythonVariables {
         return ndVars.get(name);
     }
 
+    public Object[] getListValue(String name){
+        return listVars.get(name);
+    }
+
     public Type getType(String name){
         return vars.get(name);
     }
@@ -137,19 +170,23 @@ public class PythonVariables {
     }
 
 
-    public Map getStrVariables(){
+    public Map<String, String> getStrVariables(){
         return strVars;
     }
 
-    public Map getIntVariables(){
+    public Map<String, Integer> getIntVariables(){
         return intVars;
     }
 
-    public Map getFloatVariables(){
+    public Map<String, Double> getFloatVariables(){
         return floatVars;
     }
 
-    public Map getNDArrayVariables() {
+    public Map<String, NumpyArray> getNDArrayVariables(){
         return ndVars;
+    }
+
+    public Map<String, Object[]> getListVariables(){
+        return listVars;
     }
 }

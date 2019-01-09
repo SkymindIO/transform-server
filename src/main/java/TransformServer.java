@@ -104,6 +104,9 @@ public class TransformServer extends NanoHTTPD{
                     else if (varType.equals("ndarray")){
                         pyInputs.addNDArray(varName);
                     }
+                    else if (varType.equals("list")){
+                        pyInputs.addList(varName);
+                    }
                     else{
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unsupported python type:" + varType);
                     }
@@ -259,6 +262,10 @@ public class TransformServer extends NanoHTTPD{
                                 INDArray indArray = Nd4j.create(data, shape, DataType.LONG);
                                 pyInputs.addNDArray(varName, indArray);
                             }
+                        }
+                        else if (varType == PythonVariables.Type.LIST){
+                            Object[] list = ((JSONArray)jsonObject.get(varName)).toArray();
+                            pyInputs.addList(varName, list);
                         }
                     }
                 }
