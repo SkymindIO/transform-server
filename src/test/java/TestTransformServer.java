@@ -140,36 +140,62 @@ public class TestTransformServer {
     }
 
     @Test
-    public void TestInt() throws IOException, ParseException{
+    public void TestShort() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
-        String code = "z = x + y * 2.";
+        String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
         String outputSpec = "{\"z\": \"ndarray\"}";
         server.add(null, code, inputSpec, outputSpec);
-        String inputs = "{\"x\": {\"data\": [1, 2, 3, 4], \"shape\": [2, 2], \"dtype\": \"INT\"}, \"y\": {\"data\": [4, 3, 2, 1], \"shape\": [2, 2], \"dtype\": \"INT\"}}";
+        String inputs = "{\"x\": {\"data\": [1, 2, 3, 4], \"shape\": [4], \"dtype\": \"SHORT\"}, \"y\": {\"data\": [4, 3, 2, 1], \"shape\": [4], \"dtype\": \"SHORT\"}}";
         Response response = server.exec(null, inputs);
         JSONObject z = (JSONObject) json(response).get("z");
         JSONArray zData = (JSONArray)z.get("data");
         JSONArray zShape = (JSONArray)z.get("shape");
         String dtype = (String)z.get("dtype");
-        // assertEquals("INT", dtype);  // FixMe: Output type is double for some reason
-        double[] data = new double[zData.size()];
-        for (int i=0; i<data.length; i++){
-            data[i] = (Double)zData.get(i);
+        assertEquals("INT", dtype);
+        short[] data = new short[zData.size()];
+        for(int i=0; i<data.length; i++){
+            data[i] = ((Long)zData.get(i)).shortValue();
         }
-        int[] shape = new int[zShape.size()];
+        long[] shape = new long[zShape.size()];
         for(int i=0; i<shape.length; i++){
             shape[i] = ((Long) zShape.get(i)).intValue();
         }
-        INDArray arr = Nd4j.create(data, shape);
+        INDArray arr = Nd4j.create(data, shape, DataType.INT);
         assertEquals(30, (int)arr.sum().getDouble(0));
     }
 
-    /* TODO: Fix long
+    @Test
+    public void TestInt() throws IOException, ParseException{
+        TransformServer server = new TransformServer(false);
+        String code = "z = x + y * 2";
+        String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
+        String outputSpec = "{\"z\": \"ndarray\"}";
+        server.add(null, code, inputSpec, outputSpec);
+        String inputs = "{\"x\": {\"data\": [1, 2, 3, 4], \"shape\": [4], \"dtype\": \"INT\"}, \"y\": {\"data\": [4, 3, 2, 1], \"shape\": [4], \"dtype\": \"INT\"}}";
+        Response response = server.exec(null, inputs);
+        JSONObject z = (JSONObject) json(response).get("z");
+        JSONArray zData = (JSONArray)z.get("data");
+        JSONArray zShape = (JSONArray)z.get("shape");
+        String dtype = (String)z.get("dtype");
+        assertEquals("INT", dtype);
+        int[] data = new int[zData.size()];
+        for(int i=0; i<data.length; i++){
+            data[i] = ((Long)zData.get(i)).intValue();
+        }
+        long[] shape = new long[zShape.size()];
+        for(int i=0; i<shape.length; i++){
+            shape[i] = ((Long) zShape.get(i)).intValue();
+        }
+        INDArray arr = Nd4j.create(data, shape, DataType.INT);
+        assertEquals(30, (int)arr.sum().getDouble(0));
+    }
+
+
     @Test
     public void TestLong() throws IOException, ParseException{
         TransformServer server = new TransformServer(false);
-        String code = "z = x + y * 2.";
+        String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
         String outputSpec = "{\"z\": \"ndarray\"}";
         server.add(null, code, inputSpec, outputSpec);
@@ -179,18 +205,18 @@ public class TestTransformServer {
         JSONArray zData = (JSONArray)z.get("data");
         JSONArray zShape = (JSONArray)z.get("shape");
         String dtype = (String)z.get("dtype");
-        //assertEquals("LONG", dtype);  // FixMe: Output type is double for some reason
-        double[] data = new double[zData.size()];
+        assertEquals("LONG", dtype);
+        long[] data = new long[zData.size()];
         for (int i=0; i<data.length; i++){
-            data[i] = (Double)zData.get(i);
+            data[i] = (Long)zData.get(i);
         }
-        int[] shape = new int[zShape.size()];
+        long[] shape = new long[zShape.size()];
         for(int i=0; i<shape.length; i++){
-            shape[i] = ((Long) zShape.get(i)).intValue();
+            shape[i] = ((Long) zShape.get(i));
         }
-        INDArray arr = Nd4j.create(data, shape);
+        INDArray arr = Nd4j.create(data, shape, DataType.LONG);
         assertEquals(30, (int)arr.sum().getDouble(0));
     }
-    */
+
 }
 

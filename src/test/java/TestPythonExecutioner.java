@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.nd4j.linalg.api.buffer.DataBuffer;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -61,8 +62,9 @@ public class TestPythonExecutioner {
         assertEquals(30, z);
 
     }
+
     @Test
-    public void testNDArray()throws Exception{
+    public void testNDArrayFloat()throws Exception{
         PythonExecutioner pyExec = new PythonExecutioner();
         PythonVariables pyInputs = new PythonVariables();
         PythonVariables pyOutputs = new PythonVariables();
@@ -81,4 +83,90 @@ public class TestPythonExecutioner {
         pyExec.free();
 
     }
+
+    @Test
+    public void testNDArrayDouble()throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        pyInputs.addNDArray("x", Nd4j.zeros(DataType.DOUBLE, 2, 3));
+        pyInputs.addNDArray("y", Nd4j.ones(DataType.DOUBLE, 2, 3));
+        pyOutputs.addNDArray("z");
+
+        String code = "z = x + y";
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        INDArray z = pyOutputs.getNDArrayValue("z").getND4JArray();
+
+        assertEquals(6.0, z.sum().getDouble(0));
+        pyExec.free();
+
+    }
+
+    @Test
+    public void testNDArrayShort()throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        pyInputs.addNDArray("x", Nd4j.zeros(DataType.SHORT, 2, 3));
+        pyInputs.addNDArray("y", Nd4j.ones(DataType.SHORT, 2, 3));
+        pyOutputs.addNDArray("z");
+
+        String code = "z = x + y";
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        INDArray z = pyOutputs.getNDArrayValue("z").getND4JArray();
+
+        assertEquals(6.0, z.sum().getDouble(0));
+        pyExec.free();
+
+    }
+
+
+    @Test
+    public void testNDArrayInt()throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        pyInputs.addNDArray("x", Nd4j.zeros(DataType.INT, 2, 3));
+        pyInputs.addNDArray("y", Nd4j.ones(DataType.INT, 2, 3));
+        pyOutputs.addNDArray("z");
+
+        String code = "z = x + y";
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        INDArray z = pyOutputs.getNDArrayValue("z").getND4JArray();
+
+        assertEquals(6.0, z.sum().getDouble(0));
+        pyExec.free();
+
+    }
+
+    @Test
+    public void testNDArrayLong()throws Exception{
+        PythonExecutioner pyExec = new PythonExecutioner();
+        PythonVariables pyInputs = new PythonVariables();
+        PythonVariables pyOutputs = new PythonVariables();
+
+        pyInputs.addNDArray("x", Nd4j.zeros(DataType.LONG, 2, 3));
+        pyInputs.addNDArray("y", Nd4j.ones(DataType.LONG, 2, 3));
+        pyOutputs.addNDArray("z");
+
+        String code = "z = x + y";
+
+        pyExec.exec(code, pyInputs, pyOutputs);
+
+        INDArray z = pyOutputs.getNDArrayValue("z").getND4JArray();
+
+        assertEquals(6.0, z.sum().getDouble(0));
+        pyExec.free();
+
+    }
+
 }

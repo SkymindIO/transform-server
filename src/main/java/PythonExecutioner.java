@@ -97,7 +97,6 @@ public class PythonExecutioner {
             String converter = "__arr_converter = lambda addr, shape, type: np.ctypeslib.as_array(ctypes.cast(addr, ctypes.POINTER(type)), shape);";
             inputCode += converter;
             for(String varName: VarNames){
-                System.out.println(varName);
                 NumpyArray npArr = ndInputs.get(varName);
                 String shapeStr = "(";
                 for (long d: npArr.getShape()){
@@ -113,11 +112,14 @@ public class PythonExecutioner {
                 else if (npArr.getDType() == DataType.DOUBLE){
                     ctype = "ctypes.c_double";
                 }
+                else if (npArr.getDType() == DataType.SHORT){
+                    ctype = "ctypes.c_int16";
+                }
                 else if (npArr.getDType() == DataType.INT){
-                    ctype = "ctypes.c_int";
+                    ctype = "ctypes.c_int32";
                 }
                 else if (npArr.getDType() == DataType.LONG){
-                    ctype = "ctypes.c_long";
+                    ctype = "ctypes.c_int64";
                 }
                 else{
                     throw new Exception("Unsupported data type: " + npArr.getDType().toString() + ".");
@@ -155,7 +157,7 @@ public class PythonExecutioner {
             }
         }
         catch (Exception e){
-            System.out.println(e);
+
         }
     }
     private String outputCode(PythonVariables pyOutputs){
@@ -357,6 +359,9 @@ public class PythonExecutioner {
         else if (dtypeName.equals("float32")){
             dtype = DataType.FLOAT;
         }
+        else if (dtypeName.equals("int16")){
+            dtype = DataType.SHORT;
+        }
         else if (dtypeName.equals("int32")){
             dtype = DataType.INT;
         }
@@ -366,7 +371,6 @@ public class PythonExecutioner {
         else{
             throw new Exception("Unsupported array type " + dtypeName + ".");
         }
-
         NumpyArray ret = new NumpyArray(address, shape, strides, dtype);
         Py_DecRef(arrayInterface);
         Py_DecRef(data);

@@ -154,6 +154,14 @@ public class TransformServer extends NanoHTTPD{
         }
     }
 
+    public Response delete(String name){
+        if (!transforms.containsKey(name)){
+            return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Transform not found: " + name + ".");
+        }
+        transforms.remove(name);
+        return newFixedLengthResponse(Response.Status.OK, "text/plain","Transform deleted");
+    }
+
     public Response exec(@Nullable String name, @Nullable String inputStr){
 
         if (name == null){
@@ -222,6 +230,15 @@ public class TransformServer extends NanoHTTPD{
                                 }
 
                                 INDArray indArray = Nd4j.create(data, shape);
+                                pyInputs.addNDArray(varName, indArray);
+                            }
+                            else if (dtype.equals("int16") || dtype.equals("short")){
+                                short[] data = new short[dataArr.size()];
+                                for (int i=0; i<data.length; i++){
+                                    data[i] = ((Long)dataArr.get(i)).shortValue();
+                                }
+
+                                INDArray indArray = Nd4j.create(data, shape, DataType.SHORT);
                                 pyInputs.addNDArray(varName, indArray);
                             }
                             else if (dtype.equals("int32") || dtype.equals("int")){
@@ -293,6 +310,10 @@ public class TransformServer extends NanoHTTPD{
             String name = params.get("name");
             String inputs = params.get("inputStr");
             return exec(name, inputs);
+        }
+        else if (route.equals("/delete")){
+            String name = params.get("name");
+            return delete(name);
         }
         else{
             return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Unhandled route: " + route);

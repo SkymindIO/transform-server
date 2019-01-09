@@ -63,10 +63,16 @@ public class NumpyArray {
         for (long d: nd4jArray.shape()){
             size *= d;
         }
-        for (long i=0; i<size; i++){
-            data.add(nd4jArray.getDouble(i));
+        if (dtype == DataType.SHORT || dtype == DataType.INT || dtype == DataType.LONG){
+            for (int i=0; i < size; i++){
+                data.add((long)nd4jArray.getDouble(i));
+            }
         }
-
+        else if (dtype == DataType.FLOAT || dtype == DataType.DOUBLE){
+            for (int i=0; i<size; i++){
+                data.add(nd4jArray.getDouble(i));
+            }
+        }
         JSONArray shape = new JSONArray();
         for (long d: this.shape){
             shape.add(d);
@@ -98,6 +104,9 @@ public class NumpyArray {
             }
             else if (dtypeStr.equals("DOUBLE")){
                 dtype = DataType.DOUBLE;
+            }
+            else if (dtypeStr.equals("SHORT")){
+                dtype = DataType.SHORT;
             }
             else if (dtypeStr.equals("INT")){
                 dtype = DataType.INT;
