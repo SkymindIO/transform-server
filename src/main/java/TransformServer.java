@@ -11,7 +11,9 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -119,6 +121,17 @@ public class TransformServer extends NanoHTTPD{
         System.out.println("Server started at " + getListeningPort());
     }
 
+    private String readTXT(String file) throws IOException{
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        StringBuilder stringBuilder = new StringBuilder();
+        char[] buffer = new char[10];
+        while (reader.read(buffer) != -1) {
+            stringBuilder.append(new String(buffer));
+            buffer = new char[10];
+        }
+        reader.close();
+        return stringBuilder.toString();
+    }
 
     public Response add(String name, String code, String inputStr, String outputStr){
         if (code == null){
@@ -129,6 +142,16 @@ public class TransformServer extends NanoHTTPD{
         }
         if (name.contains(":")){
             return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Illegal character \":\" in transform name.");
+        }
+        if (uploads.containsKey(name + ":" + code)){
+            try {
+                code = readTXT(uploads.get(name + ":" + code));
+                System.out.println("Code read from file:");
+                System.out.println(code);
+            }
+            catch (IOException ioe){
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "IO Error.");
+            }
         }
         PythonVariables pyInputs = null;
         if (inputStr != null){
@@ -434,7 +457,7 @@ public class TransformServer extends NanoHTTPD{
         }
         else if (route.equals("/exec")){
             String name = params.get("name");
-            String inputs = params.get("inputStr");
+            String inputs = params.get("input");
             return exec(name, inputs);
         }
         else if (route.equals("/delete")){

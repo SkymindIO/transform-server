@@ -98,37 +98,37 @@ public class PythonExecutioner {
         VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
         for(Object varName: VarNames){
             String varValue = strInputs.get(varName);
-            inputCode += varName + " = \"" + varValue + "\";";
-            inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += varName + " = \"" + varValue + "\"\n";
+            inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
         VarNames = intInputs.keySet().toArray(new String[intInputs.size()]);
         for(String varName: VarNames){
             Integer varValue = intInputs.get(varName);
-            inputCode += varName + " = " + varValue.toString() + ";";
-            inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += varName + " = " + varValue.toString() + "\n";
+            inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
         VarNames = floatInputs.keySet().toArray(new String[floatInputs.size()]);
         for(String varName: VarNames){
             Double varValue = floatInputs.get(varName);
-            inputCode += varName + " = " + varValue.toString() + ";";
-            inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += varName + " = " + varValue.toString() + "\n";
+            inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
         VarNames = listInputs.keySet().toArray(new String[listInputs.size()]);
         for (String varName: VarNames){
             Object[] varValue = listInputs.get(varName);
             String listStr = jArrayToPyString(varValue);
-            inputCode += varName + " = " + listStr + ";";
-            inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += varName + " = " + listStr + "\n";
+            inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
         VarNames = fileInputs.keySet().toArray(new String[fileInputs.size()]);
         for(Object varName: VarNames){
             String varValue = fileInputs.get(varName);
-            inputCode += varName + " = \"" + varValue + "\";";
-            inputCode += "loc['" + varName + "']=" + varName + ";";
+            inputCode += varName + " = \"" + varValue + "\"\n";
+            inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
         if (ndInputs.size()> 0){
@@ -167,9 +167,9 @@ public class PythonExecutioner {
                 }
 
                 code = "__arr_converter(" + String.valueOf(npArr.getAddress()) + "," + shapeStr + "," + ctype + ")";
-                code = varName + "=" + code + ";";
+                code = varName + "=" + code + "\n";
                 inputCode += code;
-                inputCode += "loc['" + varName + "']=" + varName + ";";
+                inputCode += "loc['" + varName + "']=" + varName + "\n";
             }
 
         }
@@ -240,13 +240,15 @@ public class PythonExecutioner {
     public static void exec(String code){
         //code = RestrictedPython.getSafeCode(code);
         System.out.println(code);
+        
+
         PyRun_SimpleStringFlags(code, null);
     }
 
     public void exec(List<String> code){
         String x = "";
         for (String line: code){
-            x += line + ";";
+            x += line + "\n";
         }
         exec(x);
     }
@@ -255,7 +257,7 @@ public class PythonExecutioner {
     public void exec(String[] code){
         String x = "";
         for (String line: code){
-            x += line + ";";
+            x += line + "\n";
         }
         exec(x);
     }
@@ -263,8 +265,8 @@ public class PythonExecutioner {
     public void exec(String code, PythonVariables pyInputs, PythonVariables pyOutputs) throws Exception{
         String inputCode = inputCode(pyInputs);
         String outputCode = outputCode(pyOutputs);
-        if (code.charAt(code.length() - 1) != ';'){
-            code += ';';
+        if (code.charAt(code.length() - 1) != '\n'){
+            code += '\n';
         }
         if(restricted){
             code = RestrictedPython.getSafeCode(code);
@@ -277,8 +279,8 @@ public class PythonExecutioner {
         String inputCode = inputCode(pyInputs);
         String x = "";
         for (String line: code){
-            if(line.charAt(line.length() - 1) != ';'){
-                x += line + ';';
+            if(line.charAt(line.length() - 1) != '\n'){
+                x += line + '\n';
             }
             else{
                 x += line;
@@ -290,15 +292,14 @@ public class PythonExecutioner {
         exec(inputCode + x);
         _readOutputs(pyOutputs);
     }
-
-
+    
     public void exec(String[] code, PythonVariables pyInputs, PythonVariables pyOutputs)throws Exception{
         String inputCode = inputCode(pyInputs);
         String outputCode = outputCode(pyOutputs);
         String x = "";
         for (String line: code){
-            if(line.charAt(line.length() - 1) != ';'){
-                x += line + ';';
+            if(line.charAt(line.length() - 1) != '\n'){
+                x += line + '\n';
             }
             else{
                 x += line;
