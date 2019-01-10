@@ -1,2 +1,2 @@
 http://127.0.0.1:8080/exec?
-input={"image_file": "pic"}
+input={"image_file": "image"}
