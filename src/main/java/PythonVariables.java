@@ -11,7 +11,8 @@ public class PythonVariables {
         INT,
         FLOAT,
         NDARRAY,
-        LIST
+        LIST,
+        FILE
 
     }
 
@@ -21,6 +22,7 @@ public class PythonVariables {
     private Map<String, Boolean> boolVars = new HashMap<String, Boolean>();
     private Map<String, NumpyArray> ndVars = new HashMap<String, NumpyArray>();
     private Map<String, Object[]> listVars = new HashMap<String, Object[]>();
+    private Map<String, String> fileVars = new HashMap<String, String>();
 
     private Map<String, Type> vars = new HashMap<String, Type>();
 
@@ -34,6 +36,7 @@ public class PythonVariables {
         maps.put(Type.FLOAT, floatVars);
         maps.put(Type.NDARRAY, ndVars);
         maps.put(Type.LIST, listVars);
+        maps.put(Type.FILE, fileVars);
 
     }
 
@@ -67,6 +70,10 @@ public class PythonVariables {
         listVars.put(name, null);
     }
 
+    public void addFile(String name){
+        vars.put(name, Type.FILE);
+        fileVars.put(name, null);
+    }
     public void addBool(String name, boolean value){
         vars.put(name, Type.BOOL);
         boolVars.put(name, value);
@@ -107,9 +114,17 @@ public class PythonVariables {
         listVars.put(name, value);
     }
 
+    public void addFile(String name, String value){
+        vars.put(name, Type.FILE);
+        fileVars.put(name, value);
+    }
+
     public void setValue(String name, Object value) throws Exception{
         Type type = vars.get(name);
-        if (type == Type.INT){
+        if (type == Type.BOOL){
+            boolVars.put(name, (Boolean)value);
+        }
+        else if (type == Type.INT){
             intVars.put(name, ((Long)value).intValue());
         }
         else if (type == Type.FLOAT){
@@ -128,6 +143,9 @@ public class PythonVariables {
         }
         else if (type == Type.LIST){
             listVars.put(name, (Object[]) value);
+        }
+        else if (type == Type.FILE){
+            fileVars.put(name, (String)value);
         }
         else{
             strVars.put(name, (String)value);
@@ -160,6 +178,10 @@ public class PythonVariables {
         return listVars.get(name);
     }
 
+    public String getFileValue(String name){
+        return fileVars.get(name);
+    }
+
     public Type getType(String name){
         return vars.get(name);
     }
@@ -170,6 +192,9 @@ public class PythonVariables {
     }
 
 
+    public Map<String, Boolean> getBoolVariables(){
+        return boolVars;
+    }
     public Map<String, String> getStrVariables(){
         return strVars;
     }
@@ -188,5 +213,9 @@ public class PythonVariables {
 
     public Map<String, Object[]> getListVariables(){
         return listVars;
+    }
+
+    public Map<String, String> getFileVariables(){
+        return fileVars;
     }
 }

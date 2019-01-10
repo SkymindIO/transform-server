@@ -1,4 +1,5 @@
 import fi.iki.elonen.NanoHTTPD;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -10,7 +11,12 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import org.bytedeco.javacpp.*;
@@ -23,18 +29,54 @@ public class TransformServer extends NanoHTTPD{
     private Map<String, PythonTransform> transforms = new HashMap<String, PythonTransform>();
     private PythonExecutioner pythonExecutioner = new PythonExecutioner("server_executioner");
     private static JSONParser parser = new JSONParser();
+    private String uploadsDirPath;
+    private Map<String, String> uploads = new HashMap<String, String>();
 
-    public static void main(String args[]){
+    private void setupDirs(){
+        String userDirPath = System.getProperty("user.home");
+        String dl4jDirPath = Paths.get(userDirPath, ".deeplearning4j").toString();
+        File dl4jDir = new File(dl4jDirPath);
+        if (!(dl4jDir.exists() && dl4jDir.isDirectory())){
+            dl4jDir.mkdir();
+        }
+        String transformServerDirPath = Paths.get(dl4jDirPath, "transform-server").toString();
+        File transformServerDir = new File(transformServerDirPath);
+        if (!(transformServerDir.exists()&& transformServerDir.isDirectory())){
+            transformServerDir.mkdir();
+        }
+        uploadsDirPath = Paths.get(transformServerDirPath, "uploads").toString();
+        try{
+            FileUtils.deleteDirectory(new File(uploadsDirPath));
+        }
+        catch (IOException ioe){
+            System.out.println(ioe.toString());
+        }
+        File uploadsDir = new File(uploadsDirPath);
+        uploadsDir.mkdir();
+    }
+
+    private String getUploadsDir(String transformName){
+        String dirPath = Paths.get(uploadsDirPath, transformName).toString();
+        File dir = new File(dirPath);
+        if (!(dir.exists() && dir.isDirectory())){
+            dir.mkdir();
+        }
+        return dirPath;
+    }
+    public static void main(String args[]) throws Exception{
+        new TransformServer();
 
     }
 
     public TransformServer(int port) throws IOException{
         super(port);
+        setupDirs();
         start();
 
     }
     public TransformServer(int port, boolean start) throws IOException{
         super(port);
+        setupDirs();
         if(start){
             this.start();
         }
@@ -61,12 +103,14 @@ public class TransformServer extends NanoHTTPD{
 
     public TransformServer(boolean start) throws IOException{
         super(8080);
+        setupDirs();
         if (start){
             this.start();
         }
     }
     public TransformServer() throws IOException{
         super(8080);
+        setupDirs();
         start();
     }
 
@@ -82,6 +126,9 @@ public class TransformServer extends NanoHTTPD{
         }
         if (name == null){
             name = "default_transform";
+        }
+        if (name.contains(":")){
+            return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Illegal character \":\" in transform name.");
         }
         PythonVariables pyInputs = null;
         if (inputStr != null){
@@ -107,6 +154,9 @@ public class TransformServer extends NanoHTTPD{
                     else if (varType.equals("list")){
                         pyInputs.addList(varName);
 
+                    }
+                    else if (varType.equals("file")){
+                        pyInputs.addFile(varName);
                     }
                     else{
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unsupported python type:" + varType);
@@ -219,7 +269,22 @@ public class TransformServer extends NanoHTTPD{
                                 shape[i] = (Long)shapeArr.get(i);
                             }
                             String dtype = (String)arr.get("dtype");
-                            dtype = dtype.toLowerCase();
+                            if (dtype == null){
+                                Object firstElem = dataArr.get(0);
+                                if (firstElem instanceof Double){
+                                    dtype = "double";
+                                }
+                                else if (firstElem instanceof Long){
+                                    dtype = "long";
+                                }
+                                else{
+                                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Illegal object in array: " + firstElem.toString() + ".");
+                                }
+                            }
+                            else{
+                                dtype = dtype.toLowerCase();
+                            }
+
                             if (dtype.equals("float32") || dtype.equals("float")){
                                 float[] data = new float[dataArr.size()];
                                 for(int i=0; i<data.length; i++){
@@ -270,6 +335,14 @@ public class TransformServer extends NanoHTTPD{
                             Object[] list = ((JSONArray)jsonObject.get(varName)).toArray();
                             pyInputs.addList(varName, list);
                         }
+                        else if (varType == PythonVariables.Type.FILE){
+                            String fileName = (String)jsonObject.get(varName);
+                            String filePath = uploads.get(name + ":" + fileName);
+                            if (filePath == null){
+                                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "File not uploaded: " + fileName + ".");
+                            }
+                            pyInputs.addFile(varName, filePath);
+                        }
                     }
                 }
                 catch (ParseException e){
@@ -311,12 +384,47 @@ public class TransformServer extends NanoHTTPD{
 
     }
 
+    private String upload(String transformName, String fileName, String tempFilePath)throws IOException{
+        // TODO: deletion policy
+        String dir = getUploadsDir(transformName);
+        String targetPath = Paths.get(dir, fileName).toString();
+        Files.copy(Paths.get(tempFilePath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+        return targetPath;
+    }
     @Override
     public Response serve(IHTTPSession session){
-
-        String route = session.getUri();
-        System.out.println(route);
+        String route = session.getUri().toLowerCase();
+        Method method = session.getMethod();
         Map<String, String> params = session.getParms();
+        int numUploaded = 0;
+        if ((route.equals("/exec")|| route.equals("/upload")) && (Method.POST.equals(method) || Method.PUT.equals(method))) {
+            Map<String, String> files = new HashMap<String, String>();
+            try {
+                session.parseBody(files);
+            } catch (IOException ioe) {
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "IO Error");
+            } catch (ResponseException re) {
+                return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            }
+            for (Map.Entry<String, String> entry: files.entrySet()){
+                String fileName = entry.getKey();
+                String tempFilePath = entry.getValue();
+                String name = params.get("name");
+                if (name == null){
+                    name = "default_transform";
+                }
+                String newFilePath;
+                try {
+                    newFilePath = upload(name, fileName, tempFilePath);
+                }
+                catch (IOException ioe){
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "IO Error");
+                }
+                uploads.put(name + ":" + fileName, newFilePath);
+                System.out.println("uploaded!");
+                numUploaded++;
+            }
+        }
         if (route.equals("/add")){
             String name = params.get("name");
             String code = params.get("code");
@@ -333,8 +441,16 @@ public class TransformServer extends NanoHTTPD{
             String name = params.get("name");
             return delete(name);
         }
+        else if (route.equals("/upload")){
+            if (method.equals(Method.POST) || (method.equals(Method.PUT))){
+                return newFixedLengthResponse(Response.Status.OK, "text/plain", String.valueOf(numUploaded) + " files uploaded.");
+            }
+            else{
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Use POST to upload files.");
+            }
+        }
         else{
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Unhandled route: " + route);
+            return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Unhandled route: " + route);
         }
 
     }

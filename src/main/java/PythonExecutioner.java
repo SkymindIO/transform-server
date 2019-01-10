@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Array;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,6 @@ public class PythonExecutioner {
     private PyObject module;
     private PyObject globals;
     private JSONParser parser = new JSONParser();
-
     public PyObject getGlobals(){
         return globals;
     }
@@ -90,7 +90,7 @@ public class PythonExecutioner {
         Map<String, Double> floatInputs = pyInputs.getFloatVariables();
         Map<String, NumpyArray> ndInputs = pyInputs.getNDArrayVariables();
         Map<String, Object[]> listInputs = pyInputs.getListVariables();
-
+        Map<String, String> fileInputs = pyInputs.getStrVariables();
 
         String[] VarNames;
 
@@ -123,6 +123,14 @@ public class PythonExecutioner {
             inputCode += varName + " = " + listStr + ";";
             inputCode += "loc['" + varName + "']=" + varName + ";";
         }
+
+        VarNames = fileInputs.keySet().toArray(new String[fileInputs.size()]);
+        for(Object varName: VarNames){
+            String varValue = fileInputs.get(varName);
+            inputCode += varName + " = \"" + varValue + "\";";
+            inputCode += "loc['" + varName + "']=" + varName + ";";
+        }
+
         if (ndInputs.size()> 0){
             inputCode += "import ctypes; import numpy as np;";
             VarNames = ndInputs.keySet().toArray(new String[ndInputs.size()]);
