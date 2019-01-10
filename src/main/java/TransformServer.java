@@ -146,8 +146,8 @@ public class TransformServer extends NanoHTTPD{
         if (uploads.containsKey(name + ":" + code)){
             try {
                 code = readTXT(uploads.get(name + ":" + code));
-                System.out.println("Code read from file:");
-                System.out.println(code);
+                System.out.println("Code read from file.");
+                //System.out.println(code);
             }
             catch (IOException ioe){
                 return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "IO Error.");
@@ -444,7 +444,7 @@ public class TransformServer extends NanoHTTPD{
                     return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "IO Error");
                 }
                 uploads.put(name + ":" + fileName, newFilePath);
-                System.out.println("uploaded!");
+                System.out.println(fileName + " uploaded");
                 numUploaded++;
             }
         }

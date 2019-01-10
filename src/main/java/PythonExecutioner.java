@@ -19,6 +19,13 @@ public class PythonExecutioner {
     private PyObject module;
     private PyObject globals;
     private JSONParser parser = new JSONParser();
+
+    private void setupCode(){
+        // Add imports that take too much time here
+        String code = "import tensorflow as tf;";
+        code += "tf.zeros((1, 1)).eval(session=tf.Session())";  // initializes devices
+        exec(code);
+    }
     public PyObject getGlobals(){
         return globals;
     }
@@ -48,6 +55,7 @@ public class PythonExecutioner {
         Py_Initialize();
         module = PyImport_AddModule("__main__");
         globals = PyModule_GetDict(module);
+        setupCode();
     }
 
     public void free(){
@@ -80,6 +88,11 @@ public class PythonExecutioner {
         return str;
     }
 
+    private String escapeStr(String str){
+        str = str.replace("\\", "\\\\");
+        str = str.replace("\"\"\"", "\\\"\\\"\\\"");
+        return str;
+    }
     private String inputCode(PythonVariables pyInputs)throws Exception{
         String inputCode = "loc={};";
         if (pyInputs == null){
@@ -90,7 +103,7 @@ public class PythonExecutioner {
         Map<String, Double> floatInputs = pyInputs.getFloatVariables();
         Map<String, NumpyArray> ndInputs = pyInputs.getNDArrayVariables();
         Map<String, Object[]> listInputs = pyInputs.getListVariables();
-        Map<String, String> fileInputs = pyInputs.getStrVariables();
+        Map<String, String> fileInputs = pyInputs.getFileVariables();
 
         String[] VarNames;
 
@@ -98,7 +111,7 @@ public class PythonExecutioner {
         VarNames = strInputs.keySet().toArray(new String[strInputs.size()]);
         for(Object varName: VarNames){
             String varValue = strInputs.get(varName);
-            inputCode += varName + " = \"" + varValue + "\"\n";
+            inputCode += varName + " = \"\"\"" + escapeStr(varValue) + "\"\"\"\n";
             inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
@@ -127,7 +140,7 @@ public class PythonExecutioner {
         VarNames = fileInputs.keySet().toArray(new String[fileInputs.size()]);
         for(Object varName: VarNames){
             String varValue = fileInputs.get(varName);
-            inputCode += varName + " = \"" + varValue + "\"\n";
+            inputCode += varName + " = \"\"\"" + escapeStr(varValue) + "\"\"\"\n";
             inputCode += "loc['" + varName + "']=" + varName + "\n";
         }
 
@@ -239,9 +252,7 @@ public class PythonExecutioner {
 
     public static void exec(String code){
         //code = RestrictedPython.getSafeCode(code);
-        System.out.println(code);
-        
-
+        //System.out.println(code);
         PyRun_SimpleStringFlags(code, null);
     }
 
@@ -292,7 +303,7 @@ public class PythonExecutioner {
         exec(inputCode + x);
         _readOutputs(pyOutputs);
     }
-    
+
     public void exec(String[] code, PythonVariables pyInputs, PythonVariables pyOutputs)throws Exception{
         String inputCode = inputCode(pyInputs);
         String outputCode = outputCode(pyOutputs);
