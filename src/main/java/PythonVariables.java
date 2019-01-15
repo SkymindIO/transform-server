@@ -1,3 +1,4 @@
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
@@ -217,5 +218,49 @@ public class PythonVariables {
 
     public Map<String, String> getFileVariables(){
         return fileVars;
+    }
+
+    public JSONArray toJSON(){
+        JSONArray arr = new JSONArray();
+        for (String varName: getVariables()){
+            JSONObject var = new JSONObject();
+            var.put("name", varName);
+            String varType = getType(varName).toString();
+            var.put("type", varType);
+            arr.add(var);
+        }
+        return arr;
+    }
+
+    public static PythonVariables fromJSON(JSONArray jsonArray){
+        PythonVariables pyvars = new PythonVariables();
+        for (int i=0; i<jsonArray.size(); i++){
+            JSONObject input = (JSONObject) jsonArray.get(i);
+            String varName = (String)input.get("name");
+            String varType = (String)input.get("type");
+            if (varType.equals("BOOL")){
+                pyvars.addBool(varName);
+            }
+            else if (varType.equals("INT")){
+                pyvars.addInt(varName);
+            }
+            else if (varType.equals("FlOAT")){
+                pyvars.addFloat(varName);
+            }
+            else if (varType.equals("STR")){
+                pyvars.addStr(varName);
+            }
+            else if (varType.equals("LSIT")){
+                pyvars.addList(varName);
+            }
+            else if (varType.equals("FILE")){
+                pyvars.addFile(varName);
+            }
+            else if (varType.equals("NDARRAY")){
+                pyvars.addNDArray(varName);
+            }
+        }
+
+        return pyvars;
     }
 }

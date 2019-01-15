@@ -32,7 +32,44 @@ public class TransformServer extends NanoHTTPD{
     private PythonExecutioner pythonExecutioner = new PythonExecutioner("server_executioner");
     private static JSONParser parser = new JSONParser();
     private String uploadsDirPath;
+    private String transformsDirPath;
     private Map<String, String> uploads = new HashMap<String, String>();
+
+    private void save() throws IOException{
+        for (Map.Entry<String, PythonTransform> entry : transforms.entrySet()){
+            String name = entry.getKey();
+            PythonTransform transform = entry.getValue();
+            String filePath = Paths.get(transformsDirPath, name + ".json").toString();
+            transform.save(filePath);
+        }
+    }
+
+    private void load() throws IOException, ParseException{
+        File transformsDir = new File(transformsDirPath);
+        for (File file: transformsDir.listFiles()){
+            String filePath = file.getAbsolutePath();
+            if (filePath.toLowerCase().endsWith(".json")){
+                PythonTransform transform = PythonTransform.load(file.getAbsolutePath());
+                transforms.put(transform.getName(), transform);
+            }
+        }
+    }
+
+    private boolean validateTransformName(String name){
+        if (name.length() == 0){
+            return false;
+        }
+        char fc = name.charAt(0);
+        if (fc <= '9' && fc >= '0'){
+            return false;
+        }
+        for (char c: name.toLowerCase().toCharArray()){
+            if (!((c <= '9' && c <= '0') || (c <= 'z' && c >= 'a') || ( c == '_'))){
+                return false;
+            }
+        }
+        return true;
+    }
 
     private void setupDirs(){
         String userDirPath = System.getProperty("user.home");
@@ -55,6 +92,13 @@ public class TransformServer extends NanoHTTPD{
         }
         File uploadsDir = new File(uploadsDirPath);
         uploadsDir.mkdir();
+
+        transformsDirPath = Paths.get(transformServerDirPath, "transforms").toString();
+        File transformsDir = new File(transformsDirPath);
+        if (!(transformsDir.exists() && transformsDir.isDirectory())){
+            transformsDir.mkdir();
+        }
+
     }
 
     private String getUploadsDir(String transformName){
@@ -70,30 +114,34 @@ public class TransformServer extends NanoHTTPD{
 
     }
 
-    public TransformServer(int port) throws IOException{
+    public TransformServer(int port) throws IOException, ParseException{
         super(port);
         setupDirs();
+        load();
         start();
 
     }
-    public TransformServer(int port, boolean start) throws IOException{
+    public TransformServer(int port, boolean start) throws IOException, ParseException{
         super(port);
         setupDirs();
+        load();
         if(start){
             this.start();
         }
     }
 
-    public TransformServer(boolean start) throws IOException{
+    public TransformServer(boolean start) throws IOException, ParseException{
         super(8080);
         setupDirs();
+        load();
         if (start){
             this.start();
         }
     }
-    public TransformServer() throws IOException{
+    public TransformServer() throws IOException, ParseException{
         super(8080);
         setupDirs();
+        load();
         start();
     }
 
@@ -121,8 +169,9 @@ public class TransformServer extends NanoHTTPD{
         if (name == null){
             name = "default_transform";
         }
-        if (name.contains(":")){
-            return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Illegal character \":\" in transform name.");
+        if (! validateTransformName(name)){
+            return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid transform name. Transform name should be non-empty," +
+                    " contain only alphabets, digits and underscores. First character should not be a digit.");
         }
         if (uploads.containsKey(name + ":" + code)){
             try {
@@ -205,6 +254,13 @@ public class TransformServer extends NanoHTTPD{
             }
         }
         PythonTransform transform = new PythonTransform(name, code, pyInputs, pyOutputs);
+        String filePath = Paths.get(transformsDirPath, name + ".json").toString();
+        try {
+            transform.save(filePath);
+        }
+        catch (IOException ioe){
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "IOError while saving transform: " + ioe.toString());
+        }
         if (transforms.containsKey(name)){
             transforms.put(name, transform);
             return newFixedLengthResponse(Response.Status.OK, "text/plain", "Transform updated: " + name);
@@ -213,6 +269,7 @@ public class TransformServer extends NanoHTTPD{
             transforms.put(name, transform);
             return newFixedLengthResponse(Response.Status.OK, "text/plain", "Transform added: " + name);
         }
+
     }
 
     public Response delete(String name){
