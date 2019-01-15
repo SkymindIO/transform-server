@@ -324,7 +324,7 @@ public class PythonExecutioner {
     }
 
     public PythonVariables exec(PythonTransform transform) throws Exception{
-        if (transform.getInputs() != null){
+        if (transform.getInputs() != null && transform.getInputs().getVariables().length > 0){
             throw new Exception("Required inputs not provided.");
         }
         exec(transform.getCode(), null, transform.getOutputs());

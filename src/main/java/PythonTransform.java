@@ -80,22 +80,9 @@ public class PythonTransform {
         return pyOutputs;
     }
 
-    private static String readTXT(String file) throws IOException{
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        StringBuilder stringBuilder = new StringBuilder();
-        char[] buffer = new char[10];
-        while (reader.read(buffer) != -1) {
-            stringBuilder.append(new String(buffer));
-            buffer = new char[10];
-        }
-        reader.close();
-        return stringBuilder.toString();
-    }
-
     public static PythonTransform load(String filePath) throws IOException, ParseException{
-        String jsonString = readTXT(filePath);
         JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(jsonString);
+        JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(filePath));
         String code = (String)jsonObject.get("code");
         String name = (String)jsonObject.get("name");
         PythonVariables pyInputs = PythonVariables.fromJSON((JSONArray) jsonObject.get("inputs"));
@@ -114,5 +101,6 @@ public class PythonTransform {
         String jsonString = jsonObject.toJSONString();
         FileWriter fw = new FileWriter(filePath);
         fw.write(jsonString);
+        fw.close();
     }
 }
