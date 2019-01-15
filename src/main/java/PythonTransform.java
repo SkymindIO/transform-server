@@ -85,8 +85,22 @@ public class PythonTransform {
         JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(filePath));
         String code = (String)jsonObject.get("code");
         String name = (String)jsonObject.get("name");
-        PythonVariables pyInputs = PythonVariables.fromJSON((JSONArray) jsonObject.get("inputs"));
-        PythonVariables pyOutputs = PythonVariables.fromJSON((JSONArray) jsonObject.get("outputs"));
+        PythonVariables pyInputs;
+        JSONArray inputsArr = (JSONArray) jsonObject.get("inputs");
+        if (inputsArr == null){
+            pyInputs = null;
+        }
+        else{
+            pyInputs = PythonVariables.fromJSON(inputsArr);
+        }
+        PythonVariables pyOutputs;
+        JSONArray outputsArr = (JSONArray) jsonObject.get("outputs");
+        if (outputsArr == null){
+            pyOutputs = null;
+        }
+        else{
+            pyOutputs = PythonVariables.fromJSON(outputsArr);
+        }
         return new PythonTransform(name, code, pyInputs, pyOutputs);
     }
 
@@ -94,9 +108,21 @@ public class PythonTransform {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("code", code);
         jsonObject.put("name", name);
-        JSONArray inputs = pyInputs.toJSON();
+        JSONArray inputs;
+        if (pyInputs == null){
+            inputs = null;
+        }
+        else{
+            inputs = pyInputs.toJSON();
+        }
         jsonObject.put("inputs", inputs);
-        JSONArray outputs = pyOutputs.toJSON();
+        JSONArray outputs;
+        if (pyOutputs == null){
+            outputs = null;
+        }
+        else{
+            outputs = pyOutputs.toJSON();
+        }
         jsonObject.put("outputs", outputs);
         String jsonString = jsonObject.toJSONString();
         FileWriter fw = new FileWriter(filePath);

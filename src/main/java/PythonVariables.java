@@ -250,7 +250,7 @@ public class PythonVariables {
             else if (varType.equals("STR")){
                 pyvars.addStr(varName);
             }
-            else if (varType.equals("LSIT")){
+            else if (varType.equals("LIST")){
                 pyvars.addList(varName);
             }
             else if (varType.equals("FILE")){

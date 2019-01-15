@@ -31,7 +31,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testSimpleExec() throws IOException{
+    public void testSimpleExec() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "print('hello world')";
         server.add(null, code, null, null);
@@ -40,7 +40,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public  void testExecWithInputs() throws IOException{
+    public  void testExecWithInputs() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "print(x + y)";
         String inputSpec = "{\"x\": \"int\", \"y\": \"int\"}";

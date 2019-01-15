@@ -22,9 +22,6 @@ public class PythonExecutioner {
 
     private void setupCode(){
         // Add imports that take too much time here
-        String code = "import tensorflow as tf;";
-        code += "tf.zeros((1, 1)).eval(session=tf.Session())";  // initializes devices
-        exec(code);
     }
     public PyObject getGlobals(){
         return globals;
