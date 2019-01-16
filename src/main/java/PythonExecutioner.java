@@ -38,7 +38,6 @@ public class PythonExecutioner {
             init();
         }
         else{
-            System.out.println("creating new interpreter : " + name);
             PyThreadState threadState = Py_NewInterpreter();
             interpreters.put(name, threadState);
             PyThreadState_Swap(threadState);
@@ -48,7 +47,16 @@ public class PythonExecutioner {
     }
 
     public void deleteInterpreter(String name){
-        // TODO
+        String temp = currentInterpreter;
+        setInterpreter(name);
+        Py_EndInterpreter(interpreters.get(name));
+        interpreters.remove(name);
+        if (temp == name){
+            setInterpreter(null);
+        }
+        else{
+            setInterpreter(temp);
+        }
     }
 
     private void setupCode(){
