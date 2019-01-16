@@ -169,7 +169,7 @@ public class TestTransformServer {
         JSONArray zData = (JSONArray)z.get("data");
         JSONArray zShape = (JSONArray)z.get("shape");
         String dtype = (String)z.get("dtype");
-        assertEquals("INT", dtype);
+        assertEquals("SHORT", dtype);
         short[] data = new short[zData.size()];
         for(int i=0; i<data.length; i++){
             data[i] = ((Long)zData.get(i)).shortValue();

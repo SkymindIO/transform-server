@@ -19,12 +19,44 @@ public class PythonExecutioner {
     private PyObject module;
     private PyObject globals;
     private JSONParser parser = new JSONParser();
+    private Map<String, PyThreadState> interpreters = new HashMap<String, PyThreadState>();
+    private String currentInterpreter =  null;
+
+    public void setInterpreter(String name){
+        if (name == null){
+            if (currentInterpreter != null){
+                PyThreadState_Swap(null);
+                currentInterpreter = null;
+            }
+        }
+        if (currentInterpreter != null && currentInterpreter.equals(name)){
+            return;
+        }
+        else if (interpreters.containsKey(name)){
+            PyThreadState threadState = interpreters.get(name);
+            PyThreadState_Swap(threadState);
+            init();
+        }
+        else{
+            System.out.println("creating new interpreter : " + name);
+            PyThreadState threadState = Py_NewInterpreter();
+            interpreters.put(name, threadState);
+            PyThreadState_Swap(threadState);
+            init();
+        }
+        currentInterpreter = name;
+    }
+
+    public void deleteInterpreter(String name){
+        // TODO
+    }
 
     private void setupCode(){
         // Add imports that take too much time here
     }
     public PyObject getGlobals(){
         return globals;
+
     }
 
     public void setRestricted(boolean restricted) {
@@ -250,6 +282,7 @@ public class PythonExecutioner {
     public static void exec(String code){
         //code = RestrictedPython.getSafeCode(code);
         //System.out.println(code);
+        System.out.println(code);
         PyRun_SimpleStringFlags(code, null);
     }
 
@@ -321,6 +354,7 @@ public class PythonExecutioner {
     }
 
     public PythonVariables exec(PythonTransform transform) throws Exception{
+        setInterpreter(transform.getName());
         if (transform.getInputs() != null && transform.getInputs().getVariables().length > 0){
             throw new Exception("Required inputs not provided.");
         }
@@ -329,6 +363,7 @@ public class PythonExecutioner {
     }
 
     public PythonVariables exec(PythonTransform transform, PythonVariables inputs)throws Exception{
+        setInterpreter(transform.getName());
         exec(transform.getCode(), inputs, transform.getOutputs());
         return transform.getOutputs();
     }

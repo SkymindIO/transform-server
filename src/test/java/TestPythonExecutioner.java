@@ -35,7 +35,6 @@ public class TestPythonExecutioner {
         pyExec.free();
 
         assertEquals("Hello World", z);
-
     }
 
     @Test
