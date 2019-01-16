@@ -51,7 +51,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testExecWithInputsAndOutputs() throws IOException, ParseException{
+    public void testExecWithInputsAndOutputs() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "y = x + 10";
         String inputSpec = "{\"x\": \"int\"}";
@@ -81,7 +81,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testNDArrays() throws IOException, ParseException{
+    public void testNDArrays() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -105,7 +105,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testFloat() throws IOException, ParseException{
+    public void testFloat() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -131,7 +131,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testDouble() throws IOException, ParseException{
+    public void testDouble() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -157,7 +157,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testShort() throws IOException, ParseException{
+    public void testShort() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -183,7 +183,7 @@ public class TestTransformServer {
     }
 
     @Test
-    public void testInt() throws IOException, ParseException{
+    public void testInt() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";
@@ -210,7 +210,7 @@ public class TestTransformServer {
 
 
     @Test
-    public void testLong() throws IOException, ParseException{
+    public void testLong() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";

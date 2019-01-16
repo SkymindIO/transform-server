@@ -35,6 +35,8 @@ public class TransformServer extends NanoHTTPD{
     private String transformsDirPath;
     private Map<String, String> uploads = new HashMap<String, String>();
 
+
+
     private void save() throws IOException{
         for (Map.Entry<String, PythonTransform> entry : transforms.entrySet()){
             String name = entry.getKey();
@@ -44,13 +46,19 @@ public class TransformServer extends NanoHTTPD{
         }
     }
 
-    private void load() throws IOException, ParseException{
+    private void load() throws IOException{
         File transformsDir = new File(transformsDirPath);
         for (File file: transformsDir.listFiles()){
             String filePath = file.getAbsolutePath();
             if (filePath.toLowerCase().endsWith(".json")){
-                PythonTransform transform = PythonTransform.load(file.getAbsolutePath());
-                transforms.put(transform.getName(), transform);
+                try{
+                    PythonTransform transform = PythonTransform.load(file.getAbsolutePath());
+                    transforms.put(transform.getName(), transform);
+                }
+                catch (Exception e){
+                    System.out.println("Error loading transform from file: " + file.getAbsolutePath() + ". " + e.toString());
+                }
+
             }
         }
     }
@@ -162,7 +170,7 @@ public class TransformServer extends NanoHTTPD{
         return stringBuilder.toString();
     }
 
-    public Response add(String name, String code, String inputStr, String outputStr){
+    public Response add(String name, String code, String inputStr, String outputStr) throws Exception{
         if (code == null){
             return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "No code!");
         }
@@ -491,7 +499,13 @@ public class TransformServer extends NanoHTTPD{
             String code = params.get("code");
             String inputStr = params.get("input");
             String outputStr = params.get("output");
-            return add(name, code, inputStr, outputStr);
+            try{
+                return add(name, code, inputStr, outputStr);
+            }
+            catch (Exception e){
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", e.toString());
+            }
+
         }
         else if (route.equals("/exec")){
             String name = params.get("name");

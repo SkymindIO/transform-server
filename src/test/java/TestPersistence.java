@@ -53,7 +53,7 @@ public class TestPersistence {
     }
 
     @Test
-    public void testExecWithInputsAndOutputs() throws IOException, ParseException{
+    public void testExecWithInputsAndOutputs() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "y = x + 10";
         String inputSpec = "{\"x\": \"int\"}";
@@ -96,7 +96,7 @@ public class TestPersistence {
         }
     }
     @Test
-    public void testNDArrays() throws IOException, ParseException{
+    public void testNDArrays() throws Exception{
         TransformServer server = new TransformServer(false);
         String code = "z = x + y * 2.";
         String inputSpec = "{\"x\": \"ndarray\", \"y\": \"ndarray\"}";

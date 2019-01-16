@@ -136,7 +136,7 @@ public class PythonVariables {
                 ndVars.put(name, (NumpyArray)value);
             }
             else if (value instanceof  INDArray){
-                ndVars.put(name, (NumpyArray)value);
+                ndVars.put(name, new NumpyArray((INDArray) value));
             }
             else{
                 ndVars.put(name, new NumpyArray((JSONObject)value));

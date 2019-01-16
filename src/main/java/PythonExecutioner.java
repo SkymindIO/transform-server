@@ -59,9 +59,6 @@ public class PythonExecutioner {
         }
     }
 
-    private void setupCode(){
-        // Add imports that take too much time here
-    }
     public PyObject getGlobals(){
         return globals;
 
@@ -92,7 +89,6 @@ public class PythonExecutioner {
         Py_Initialize();
         module = PyImport_AddModule("__main__");
         globals = PyModule_GetDict(module);
-        setupCode();
     }
 
     public void free(){
@@ -361,18 +357,31 @@ public class PythonExecutioner {
         _readOutputs(pyOutputs);
     }
 
+    private void setupTransform(PythonTransform transform){
+        String name = transform.getName();
+        if (!interpreters.containsKey(name)){
+            setInterpreter(name);
+            String setupCode = transform.getSetupCode();
+            if (setupCode != null) {
+                exec(setupCode);
+            }
+        }
+        else{
+            setInterpreter(name);
+        }
+    }
     public PythonVariables exec(PythonTransform transform) throws Exception{
-        setInterpreter(transform.getName());
+        setupTransform(transform);
         if (transform.getInputs() != null && transform.getInputs().getVariables().length > 0){
             throw new Exception("Required inputs not provided.");
         }
-        exec(transform.getCode(), null, transform.getOutputs());
+        exec(transform.getExecCode(), null, transform.getOutputs());
         return transform.getOutputs();
     }
 
     public PythonVariables exec(PythonTransform transform, PythonVariables inputs)throws Exception{
-        setInterpreter(transform.getName());
-        exec(transform.getCode(), inputs, transform.getOutputs());
+        setupTransform(transform);
+        exec(transform.getExecCode(), inputs, transform.getOutputs());
         return transform.getOutputs();
     }
 
